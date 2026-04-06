@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Modal,
@@ -8,15 +8,20 @@ import {
   Platform,
   ViewStyle,
   DimensionValue,
+  Animated,
+  Dimensions,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { ColorScheme } from '../../constants/colorSchemes';
+
+const SCREEN_HEIGHT = Dimensions.get('window').height;
+const SLIDE_DURATION = 320;
 
 interface Props {
   visible: boolean;
   onClose: () => void;
   scheme: ColorScheme;
-  maxHeight?: DimensionValue;
+  height?: DimensionValue;
   keyboardAvoiding?: boolean;
   contentStyle?: ViewStyle;
   children: React.ReactNode;
@@ -24,45 +29,117 @@ interface Props {
 
 /**
  * Standard bottom-sheet modal wrapper used across the app.
- * The sheet is absolutely positioned at the bottom of the screen so it
- * renders correctly on both web and native (Expo Go / tunnel).
- * Tapping the blurred backdrop area above the sheet dismisses it.
+ * The backdrop blurs in immediately while the sheet slides up
+ * from the bottom independently, avoiding the awkward
+ * "blur-slides-with-content" look of animationType="slide".
  */
 export default function ModalSheet({
   visible,
   onClose,
   scheme,
-  maxHeight = '85%',
+  height = '70%',
   keyboardAvoiding = false,
   contentStyle,
   children,
 }: Props) {
+  // Two-phase mount: `visible` controls the Modal, `ready` triggers animations
+  // after the native views exist.
+  const [showModal, setShowModal] = useState(false);
+  const backdropOpacity = useRef(new Animated.Value(0)).current;
+  const sheetTranslateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+
+  // Phase 1: when visible goes true, mount the Modal.
+  // When visible goes false, run exit animation then unmount.
+  useEffect(() => {
+    if (visible) {
+      // Reset animated values before mounting
+      backdropOpacity.setValue(0);
+      sheetTranslateY.setValue(SCREEN_HEIGHT);
+      setShowModal(true);
+    } else if (showModal) {
+      // Animate out, then unmount the Modal
+      Animated.parallel([
+        Animated.timing(backdropOpacity, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(sheetTranslateY, {
+          toValue: SCREEN_HEIGHT,
+          duration: 280,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        setShowModal(false);
+      });
+    }
+  }, [visible]);
+
+  // Phase 2: once the Modal is mounted (native views exist),
+  // run the entrance animation.
+  useEffect(() => {
+    if (showModal && visible) {
+      Animated.parallel([
+        Animated.timing(backdropOpacity, {
+          toValue: 1,
+          duration: 180,
+          useNativeDriver: true,
+        }),
+        Animated.timing(sheetTranslateY, {
+          toValue: 0,
+          duration: SLIDE_DURATION,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [showModal]);
+
+  if (!showModal) return null;
+
+  // Resolve percentage height to pixels since the wrapper
+  // has no explicit height for percentages to resolve against.
+  const resolvedHeight =
+    typeof height === 'string' && height.endsWith('%')
+      ? (parseFloat(height) / 100) * SCREEN_HEIGHT
+      : height;
+
   const inner = (
     <View style={styles.backdrop}>
-      <BlurView intensity={30} tint={scheme.blurTint} style={StyleSheet.absoluteFillObject} />
+      {/* Blurred backdrop — fades in independently */}
+      <Animated.View style={[StyleSheet.absoluteFillObject, { opacity: backdropOpacity }]}>
+        <BlurView intensity={30} tint={scheme.blurTint} style={StyleSheet.absoluteFillObject} />
+      </Animated.View>
 
-      {/* Full-screen dismiss target — sits behind the sheet in z-order */}
+      {/* Full-screen dismiss target */}
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={StyleSheet.absoluteFillObject} />
       </TouchableWithoutFeedback>
 
-      {/* Sheet — absolutely pinned to the bottom, rendered above dismiss target */}
-      <TouchableWithoutFeedback>
-        <View style={[styles.sheet, { maxHeight, borderColor: scheme.surfaceBorder }]}>
-          <BlurView intensity={40} tint={scheme.blurTint} style={StyleSheet.absoluteFillObject} />
-          <View style={[styles.sheetInner, { backgroundColor: scheme.surface }, contentStyle]}>
-            {children}
+      {/* Sheet — slides up from bottom independently */}
+      <Animated.View
+        style={[
+          styles.sheetWrapper,
+          { transform: [{ translateY: sheetTranslateY }] },
+        ]}
+        pointerEvents="box-none"
+      >
+        <TouchableWithoutFeedback>
+          <View style={[styles.sheet, { height: resolvedHeight, borderColor: scheme.surfaceBorder }]}>
+            <BlurView intensity={40} tint={scheme.blurTint} style={StyleSheet.absoluteFillObject} />
+            <View style={[styles.sheetInner, { backgroundColor: scheme.surface }, contentStyle]}>
+              {children}
+            </View>
           </View>
-        </View>
-      </TouchableWithoutFeedback>
+        </TouchableWithoutFeedback>
+      </Animated.View>
     </View>
   );
 
   return (
     <Modal
-      visible={visible}
+      visible={showModal}
       transparent
-      animationType="slide"
+      animationType="none"
       onRequestClose={onClose}
     >
       {keyboardAvoiding ? (
@@ -81,11 +158,13 @@ const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
   },
-  sheet: {
+  sheetWrapper: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
+  },
+  sheet: {
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     overflow: 'hidden',

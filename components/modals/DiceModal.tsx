@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { ColorScheme } from '../../constants/colorSchemes';
 import GlassButton from '../ui/GlassButton';
 import ModalSheet from './ModalSheet';
@@ -79,11 +80,17 @@ export default function DiceModal({ visible, onClose, scheme }: Props) {
   };
 
   return (
-    <ModalSheet visible={visible} onClose={onClose} scheme={scheme} maxHeight="85%">
+    <ModalSheet visible={visible} onClose={onClose} scheme={scheme}>
       <View style={styles.header}>
         <Text style={[styles.title, { color: scheme.text }]}>Dice Roller</Text>
-        <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Text style={[styles.close, { color: scheme.textSecondary }]}>✕</Text>
+        <TouchableOpacity
+          onPress={onClose}
+          activeOpacity={0.7}
+          style={[styles.closeBtn, { borderColor: scheme.surfaceBorder }]}
+        >
+          <BlurView intensity={20} tint={scheme.blurTint} style={StyleSheet.absoluteFillObject} />
+          <View style={[StyleSheet.absoluteFillObject, { backgroundColor: scheme.surface }]} />
+          <Text style={[styles.closeIcon, { color: scheme.textSecondary }]}>✕</Text>
         </TouchableOpacity>
       </View>
 
@@ -224,9 +231,18 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '800',
   },
-  close: {
-    fontSize: 20,
-    fontWeight: '600',
+  closeBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  closeIcon: {
+    fontSize: 14,
+    fontWeight: '700',
   },
   dieRow: {
     marginBottom: 16,

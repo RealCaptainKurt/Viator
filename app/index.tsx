@@ -18,7 +18,9 @@ import CharacterSheet from '../components/character/CharacterSheet';
 import CampaignSheet from '../components/campaign/CampaignSheet';
 import Sidebar from '../components/ui/Sidebar';
 import DiceModal from '../components/modals/DiceModal';
+import OracleModal from '../components/modals/OracleModal';
 import PageSettingsPanel from '../components/ui/PageSettingsPanel';
+import FloatingToolbar from '../components/ui/FloatingToolbar';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.2;
@@ -36,6 +38,7 @@ export default function MainScreen() {
   } = useAppStore();
 
   const [showDice, setShowDice] = useState(false);
+  const [showOracle, setShowOracle] = useState(false);
   const [showPageSettings, setShowPageSettings] = useState(false);
 
   // Derive active data
@@ -52,13 +55,19 @@ export default function MainScreen() {
   const scheme = COLOR_SCHEMES[schemeId];
   const defaultScheme = COLOR_SCHEMES[DEFAULT_SCHEME];
 
-  // Swipe-to-open gesture for sidebar
+  // Track whether a modal is open via a ref so the PanResponder
+  // (which captures its closure once) can read the current value.
+  const modalOpenRef = useRef(false);
+  modalOpenRef.current = showDice || showOracle;
+
+  // Swipe-to-open gesture for sidebar (disabled when a modal is open)
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, gs) =>
+        !modalOpenRef.current &&
         Math.abs(gs.dx) > 8 && Math.abs(gs.dy) < 40 && gs.dx > 0,
       onPanResponderRelease: (_, gs) => {
-        if (gs.dx > SWIPE_THRESHOLD) {
+        if (!modalOpenRef.current && gs.dx > SWIPE_THRESHOLD) {
           openSidebar();
         }
       },
@@ -177,10 +186,20 @@ export default function MainScreen() {
               />
             )}
 
-            <View style={{ height: 60 }} />
+            {/* Extra bottom padding to clear the floating toolbar */}
+            <View style={{ height: 100 }} />
           </ScrollView>
         )}
       </SafeAreaView>
+
+      {/* ── Floating Toolbar (above content, below modals) ── */}
+      {hasContent && (
+        <FloatingToolbar
+          scheme={scheme}
+          onDicePress={() => setShowDice(true)}
+          onOraclePress={() => setShowOracle(true)}
+        />
+      )}
 
       {/* ── Page Settings Dropdown ─────────────────── */}
       {showPageSettings && (
@@ -213,6 +232,7 @@ export default function MainScreen() {
 
       {/* ── Modals ─────────────────────────────────── */}
       <DiceModal visible={showDice} onClose={() => setShowDice(false)} scheme={scheme} />
+      <OracleModal visible={showOracle} onClose={() => setShowOracle(false)} scheme={scheme} />
     </View>
   );
 }
