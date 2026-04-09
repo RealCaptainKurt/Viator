@@ -1,5 +1,7 @@
 import React from 'react';
-import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import GlassHighlight from './GlassHighlight';
 import { BlurView } from 'expo-blur';
 import { ColorScheme } from '../../constants/colorSchemes';
 
@@ -18,13 +20,16 @@ export default function FloatingToolbar({ scheme, onDicePress, onOraclePress }: 
           activeOpacity={0.7}
           style={[styles.fab, { borderColor: scheme.surfaceBorder }]}
         >
-          <BlurView
-            intensity={30}
-            tint={scheme.blurTint}
-            style={StyleSheet.absoluteFillObject}
-          />
-          <View style={[StyleSheet.absoluteFillObject, { backgroundColor: scheme.surface }]} />
-          <Text style={[styles.fabIcon, { color: scheme.text }]}>🎲</Text>
+          <View style={styles.fabBg}>
+            <BlurView
+              intensity={30}
+              tint={scheme.blurTint}
+              style={StyleSheet.absoluteFillObject}
+            />
+            <View style={[StyleSheet.absoluteFillObject, { backgroundColor: scheme.surface }]} />
+            <GlassHighlight borderRadius={FAB_SIZE / 2} />
+          </View>
+          <MaterialCommunityIcons name="dice-multiple" size={24} color={scheme.text} />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -32,13 +37,16 @@ export default function FloatingToolbar({ scheme, onDicePress, onOraclePress }: 
           activeOpacity={0.7}
           style={[styles.fab, { borderColor: scheme.surfaceBorder }]}
         >
-          <BlurView
-            intensity={30}
-            tint={scheme.blurTint}
-            style={StyleSheet.absoluteFillObject}
-          />
-          <View style={[StyleSheet.absoluteFillObject, { backgroundColor: scheme.surface }]} />
-          <Text style={[styles.fabIcon, { color: scheme.text }]}>📜</Text>
+          <View style={styles.fabBg}>
+            <BlurView
+              intensity={30}
+              tint={scheme.blurTint}
+              style={StyleSheet.absoluteFillObject}
+            />
+            <View style={[StyleSheet.absoluteFillObject, { backgroundColor: scheme.surface }]} />
+            <GlassHighlight borderRadius={FAB_SIZE / 2} />
+          </View>
+          <MaterialCommunityIcons name="script-text" size={24} color={scheme.text} />
         </TouchableOpacity>
       </View>
     </View>
@@ -66,7 +74,6 @@ const styles = StyleSheet.create({
     height: FAB_SIZE,
     borderRadius: FAB_SIZE / 2,
     borderWidth: 1,
-    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
     // subtle shadow for depth
@@ -76,7 +83,10 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
   },
-  fabIcon: {
-    fontSize: 24,
+  fabBg: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: FAB_SIZE / 2,
+    overflow: 'hidden',
   },
+
 });

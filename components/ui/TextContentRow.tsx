@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Feather } from '@expo/vector-icons';
 import {
   View,
   Text,
@@ -48,7 +49,7 @@ export default function TextContentRow({
             {placeholder}
           </Text>
         )}
-        <Text style={[styles.editIcon, { color: scheme.textMuted }]}>✎</Text>
+        <Feather name="edit-2" size={14} color={scheme.textMuted} style={{ paddingTop: 2 }} />
       </TouchableOpacity>
 
       <ModalOverlay

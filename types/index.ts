@@ -34,10 +34,18 @@ export interface AdditionalListComponent {
   items: NamedItem[];
 }
 
+export interface AdditionalNumberComponent {
+  id: string;
+  type: 'number';
+  name: string;
+  value: number;
+}
+
 /** Shared additional component union — used by both Character and Campaign. */
 export type AdditionalComponent =
   | AdditionalTextComponent
-  | AdditionalListComponent;
+  | AdditionalListComponent
+  | AdditionalNumberComponent;
 
 // ─── Viator Character ────────────────────────────────────────────────────────
 export interface Character {

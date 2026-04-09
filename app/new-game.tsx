@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import {
   View,
   Text,
@@ -132,7 +133,7 @@ export default function NewGameScreen() {
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             style={styles.headerBtn}
           >
-            <Text style={[styles.headerBtnText, { color: scheme.textSecondary }]}>✕</Text>
+            <Ionicons name="close" size={22} color={scheme.textSecondary} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: scheme.text }]}>{stepTitle}</Text>
           <View style={styles.headerBtn} />
@@ -168,7 +169,7 @@ export default function NewGameScreen() {
                     { borderColor: scheme.primary + '55', backgroundColor: scheme.primaryMuted },
                   ]}
                 >
-                  <Text style={styles.cardIcon}>⚔</Text>
+                  <MaterialCommunityIcons name="sword-cross" size={24} color={scheme.text} style={{ marginBottom: 4 }} />
                   <Text style={[styles.cardTitle, { color: scheme.text }]}>New Character</Text>
                   <Text style={[styles.cardDesc, { color: scheme.textSecondary }]}>
                     Create a Viator character. Optionally start a campaign too.
@@ -184,7 +185,7 @@ export default function NewGameScreen() {
                     { borderColor: scheme.surfaceBorder, backgroundColor: scheme.surface },
                   ]}
                 >
-                  <Text style={styles.cardIcon}>📜</Text>
+                  <MaterialCommunityIcons name="script-text" size={24} color={scheme.text} style={{ marginBottom: 4 }} />
                   <Text style={[styles.cardTitle, { color: scheme.text }]}>Campaign Only</Text>
                   <Text style={[styles.cardDesc, { color: scheme.textSecondary }]}>
                     Track a campaign with a non-Viator character.
@@ -247,7 +248,7 @@ export default function NewGameScreen() {
                     onPress={() => setTraits((prev) => prev.filter((x) => x.id !== t.id))}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
-                    <Text style={{ color: scheme.destructive, fontSize: 16 }}>✕</Text>
+                    <Ionicons name="close" size={16} color={scheme.destructive} />
                   </TouchableOpacity>
                 </View>
               ))}
@@ -368,7 +369,7 @@ export default function NewGameScreen() {
                     { borderColor: scheme.primary + '55', backgroundColor: scheme.primaryMuted },
                   ]}
                 >
-                  <Text style={styles.cardIcon}>🗺</Text>
+                  <MaterialCommunityIcons name="map-outline" size={24} color={scheme.text} style={{ marginBottom: 4 }} />
                   <Text style={[styles.cardTitle, { color: scheme.text }]}>Yes, Start Campaign</Text>
                   <Text style={[styles.cardDesc, { color: scheme.textSecondary }]}>
                     Create character + campaign tracker together.
@@ -383,7 +384,7 @@ export default function NewGameScreen() {
                     { borderColor: scheme.surfaceBorder, backgroundColor: scheme.surface },
                   ]}
                 >
-                  <Text style={styles.cardIcon}>⚔</Text>
+                  <MaterialCommunityIcons name="sword-cross" size={24} color={scheme.text} style={{ marginBottom: 4 }} />
                   <Text style={[styles.cardTitle, { color: scheme.text }]}>Character Only</Text>
                   <Text style={[styles.cardDesc, { color: scheme.textSecondary }]}>
                     Just the character sheet for now.

@@ -6,6 +6,7 @@ import {
   Trait,
   NamedItem,
   AdditionalComponent,
+  AdditionalNumberComponent,
 } from '../types';
 import {
   loadCharacters,
@@ -66,11 +67,16 @@ interface AppState {
   ) => void;
   removeTrait: (characterId: string, traitId: string) => void;
 
-  // Additional components on character (text or list)
+  // Additional components on character (text, list, or number)
   addCharacterComponent: (
     characterId: string,
-    type: 'text' | 'list',
+    type: 'text' | 'list' | 'number',
     name: string
+  ) => void;
+  updateCharacterComponentNumber: (
+    characterId: string,
+    componentId: string,
+    value: number
   ) => void;
   updateCharacterComponentText: (
     characterId: string,
@@ -131,8 +137,13 @@ interface AppState {
   // Additional components
   addCampaignComponent: (
     campaignId: string,
-    type: 'text' | 'list',
+    type: 'text' | 'list' | 'number',
     name: string
+  ) => void;
+  updateCampaignComponentNumber: (
+    campaignId: string,
+    componentId: string,
+    value: number
   ) => void;
   updateCampaignComponentText: (
     campaignId: string,
@@ -318,10 +329,28 @@ export const useAppStore = create<AppState>((set, get) => ({
       const comp: AdditionalComponent =
         type === 'text'
           ? { id: generateId(), type: 'text', name, content: '' }
-          : { id: generateId(), type: 'list', name, items: [] };
+          : type === 'list'
+          ? { id: generateId(), type: 'list', name, items: [] }
+          : { id: generateId(), type: 'number', name, value: 0 };
       const updated = {
         ...char,
         additionalComponents: [...char.additionalComponents, comp],
+        updatedAt: Date.now(),
+      };
+      persistChar(updated);
+      return { characters: { ...s.characters, [characterId]: updated } };
+    });
+  },
+
+  updateCharacterComponentNumber: (characterId, componentId, value) => {
+    set((s) => {
+      const char = s.characters[characterId];
+      if (!char) return s;
+      const updated = {
+        ...char,
+        additionalComponents: char.additionalComponents.map((c) =>
+          c.id === componentId && c.type === 'number' ? { ...c, value } : c
+        ),
         updatedAt: Date.now(),
       };
       persistChar(updated);
@@ -521,10 +550,28 @@ export const useAppStore = create<AppState>((set, get) => ({
       const comp: AdditionalComponent =
         type === 'text'
           ? { id: generateId(), type: 'text', name, content: '' }
-          : { id: generateId(), type: 'list', name, items: [] };
+          : type === 'list'
+          ? { id: generateId(), type: 'list', name, items: [] }
+          : { id: generateId(), type: 'number', name, value: 0 };
       const updated = {
         ...camp,
         additionalComponents: [...camp.additionalComponents, comp],
+        updatedAt: Date.now(),
+      };
+      persistCamp(updated);
+      return { campaigns: { ...s.campaigns, [campaignId]: updated } };
+    });
+  },
+
+  updateCampaignComponentNumber: (campaignId, componentId, value) => {
+    set((s) => {
+      const camp = s.campaigns[campaignId];
+      if (!camp) return s;
+      const updated = {
+        ...camp,
+        additionalComponents: camp.additionalComponents.map((c) =>
+          c.id === componentId && c.type === 'number' ? { ...c, value } : c
+        ),
         updatedAt: Date.now(),
       };
       persistCamp(updated);

@@ -6,7 +6,9 @@ import {
   ViewStyle,
   TextStyle,
   ActivityIndicator,
+  View,
 } from 'react-native';
+import GlassHighlight from './GlassHighlight';
 import { BlurView } from 'expo-blur';
 import { ColorScheme } from '../../constants/colorSchemes';
 
@@ -62,6 +64,8 @@ export default function GlassButton({
       ? scheme.text
       : scheme.textSecondary;
 
+  const borderRadius = small ? 9 : 12;
+
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -78,8 +82,9 @@ export default function GlassButton({
       <BlurView
         intensity={15}
         tint={scheme.blurTint}
-        style={StyleSheet.absoluteFillObject}
+        style={[StyleSheet.absoluteFillObject, { borderRadius }]}
       />
+      <GlassHighlight borderRadius={borderRadius} />
       {loading ? (
         <ActivityIndicator size="small" color={color} />
       ) : (

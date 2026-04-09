@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import {
   View,
   Text,
@@ -130,9 +131,7 @@ export default function MainScreen() {
               style={styles.settingsBtn}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Text style={[styles.settingsBtnText, { color: scheme.textSecondary }]}>
-                ⚙
-              </Text>
+              <Ionicons name="settings-outline" size={22} color={scheme.textSecondary} />
             </TouchableOpacity>
           )}
         </View>
@@ -140,7 +139,7 @@ export default function MainScreen() {
         {/* ── Main Content ─────────────────────────── */}
         {!hasContent ? (
           <View style={styles.emptyState}>
-            <Text style={[styles.emptyIcon]}>⚔</Text>
+            <MaterialCommunityIcons name="sword-cross" size={48} color={scheme.textMuted} style={{ marginBottom: 8 }} />
             <Text style={[styles.emptyTitle, { color: scheme.text }]}>
               Viator
             </Text>
@@ -157,9 +156,10 @@ export default function MainScreen() {
                 },
               ]}
             >
-              <Text style={[styles.emptyNewBtnText, { color: scheme.primary }]}>
-                ✦  New Game
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <MaterialCommunityIcons name="star-four-points" size={17} color={scheme.primary} />
+                <Text style={[styles.emptyNewBtnText, { color: scheme.primary }]}>New Game</Text>
+              </View>
             </TouchableOpacity>
             <Text
               style={[styles.emptyHint, { color: scheme.textMuted }]}
@@ -219,10 +219,6 @@ export default function MainScreen() {
         onNewGame={() => {
           closeSidebar();
           router.push('/new-game');
-        }}
-        onDiceRolls={() => {
-          closeSidebar();
-          setShowDice(true);
         }}
         onRules={() => {
           closeSidebar();

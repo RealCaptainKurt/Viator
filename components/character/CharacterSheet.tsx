@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { COLOR_SCHEMES } from '../../constants/colorSchemes';
-import { Character, AdditionalListComponent, CollapsedSections } from '../../types';
+import { Character, AdditionalListComponent, AdditionalNumberComponent, CollapsedSections } from '../../types';
 import { useAppStore } from '../../store/appStore';
 import GlassCard from '../ui/GlassCard';
 import CollapsibleSection from '../ui/CollapsibleSection';
@@ -31,6 +31,7 @@ export default function CharacterSheet({ character }: Props) {
     updateTrait,
     removeTrait,
     updateCharacterComponentText,
+    updateCharacterComponentNumber,
     addCharacterComponentListItem,
     updateCharacterComponentListItem,
     removeCharacterComponentListItem,
@@ -38,7 +39,7 @@ export default function CharacterSheet({ character }: Props) {
 
   const [collapsed, setCollapsed] = useState<CollapsedSections>({
     description: false,
-    traits: false,
+    traits: true,
   });
 
   // XP modal state
@@ -52,6 +53,23 @@ export default function CharacterSheet({ character }: Props) {
 
   // Add-item state for list components
   const [addingItemCompId, setAddingItemCompId] = useState<string | null>(null);
+
+  // Number component edit state
+  const [editingNumberId, setEditingNumberId] = useState<string | null>(null);
+  const [draftNumber, setDraftNumber] = useState('0');
+
+  const openNumberModal = (comp: AdditionalNumberComponent) => {
+    setEditingNumberId(comp.id);
+    setDraftNumber(String(comp.value));
+  };
+  const adjustNumber = (delta: number) =>
+    setDraftNumber((v) => String((parseInt(v, 10) || 0) + delta));
+  const handleNumberSave = () => {
+    if (!editingNumberId) return;
+    const n = parseInt(draftNumber, 10);
+    if (!isNaN(n)) updateCharacterComponentNumber(character.id, editingNumberId, n);
+    setEditingNumberId(null);
+  };
 
   const toggle = (key: string) =>
     setCollapsed((s) => ({ ...s, [key]: !s[key] }));
@@ -300,7 +318,7 @@ export default function CharacterSheet({ character }: Props) {
               key={comp.id}
               title={comp.name}
               scheme={scheme}
-              collapsed={collapsed[comp.id] ?? false}
+              collapsed={collapsed[comp.id] ?? true}
               onToggle={() => toggle(comp.id)}
               rightContent={
                 <TouchableOpacity
@@ -349,17 +367,41 @@ export default function CharacterSheet({ character }: Props) {
           );
         }
 
+        // Number component
+        if (comp.type === 'number') {
+          const numComp = comp as AdditionalNumberComponent;
+          return (
+            <CollapsibleSection
+              key={comp.id}
+              title={comp.name}
+              scheme={scheme}
+              collapsed={collapsed[comp.id] ?? true}
+              onToggle={() => toggle(comp.id)}
+            >
+              <TouchableOpacity
+                onPress={() => openNumberModal(numComp)}
+                activeOpacity={0.7}
+                style={styles.numBox}
+              >
+                <Text style={[styles.numValue, { color: scheme.primary }]}>
+                  {numComp.value}
+                </Text>
+              </TouchableOpacity>
+            </CollapsibleSection>
+          );
+        }
+
         // Text component
         return (
           <CollapsibleSection
             key={comp.id}
             title={comp.name}
             scheme={scheme}
-            collapsed={collapsed[comp.id] ?? false}
+            collapsed={collapsed[comp.id] ?? true}
             onToggle={() => toggle(comp.id)}
           >
             <TextContentRow
-              content={comp.content}
+              content={(comp as { content: string }).content}
               scheme={scheme}
               placeholder={`Tap to add ${comp.name.toLowerCase()}...`}
               title={comp.name}
@@ -370,6 +412,46 @@ export default function CharacterSheet({ character }: Props) {
           </CollapsibleSection>
         );
       })}
+
+      {/* ── Number Component Edit Modal ─────────────── */}
+      <ModalOverlay
+        visible={editingNumberId !== null}
+        onClose={() => setEditingNumberId(null)}
+        scheme={scheme}
+        title={
+          character.additionalComponents.find((c) => c.id === editingNumberId)?.name ?? ''
+        }
+      >
+        <View style={styles.xpModalRow}>
+          <TouchableOpacity
+            onPress={() => adjustNumber(-1)}
+            style={[styles.xpAdjustBtn, { borderColor: scheme.surfaceBorder, backgroundColor: scheme.surface }]}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.xpAdjustText, { color: scheme.destructive }]}>−</Text>
+          </TouchableOpacity>
+          <TextInput
+            value={draftNumber}
+            onChangeText={(v) => { if (v === '' || /^-?\d+$/.test(v)) setDraftNumber(v); }}
+            keyboardType="number-pad"
+            style={[styles.xpModalInput, { color: scheme.primary, borderColor: scheme.surfaceBorder, backgroundColor: scheme.primaryMuted }]}
+            selectionColor={scheme.primary}
+            selectTextOnFocus
+            autoFocus
+          />
+          <TouchableOpacity
+            onPress={() => adjustNumber(1)}
+            style={[styles.xpAdjustBtn, { borderColor: scheme.surfaceBorder, backgroundColor: scheme.surface }]}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.xpAdjustText, { color: scheme.primary }]}>+</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.modalActions}>
+          <GlassButton label="Cancel" onPress={() => setEditingNumberId(null)} scheme={scheme} variant="ghost" small style={{ flex: 1 }} />
+          <GlassButton label="Save" onPress={handleNumberSave} scheme={scheme} variant="primary" small style={{ flex: 1 }} />
+        </View>
+      </ModalOverlay>
     </GlassCard>
   );
 }
@@ -436,6 +518,7 @@ const styles = StyleSheet.create({
   },
   xpModalInput: {
     flex: 1,
+    minWidth: 0,
     borderWidth: 1,
     borderRadius: 10,
     padding: 10,
@@ -477,5 +560,17 @@ const styles = StyleSheet.create({
   modalActions: {
     flexDirection: 'row',
     gap: 8,
+  },
+  numBox: {
+    alignSelf: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 24,
+    borderRadius: 10,
+    marginVertical: 4,
+  },
+  numValue: {
+    fontSize: 36,
+    fontWeight: '700',
+    textAlign: 'center',
   },
 });

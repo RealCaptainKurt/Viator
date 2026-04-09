@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useMemo } from 'react';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import {
   View,
   Text,
@@ -22,7 +23,6 @@ interface Props {
   visible: boolean;
   onClose: () => void;
   onNewGame: () => void;
-  onDiceRolls: () => void;
   onRules: () => void;
   scheme: ColorScheme;
 }
@@ -31,7 +31,6 @@ export default function Sidebar({
   visible,
   onClose,
   onNewGame,
-  onDiceRolls,
   onRules,
   scheme,
 }: Props) {
@@ -145,9 +144,8 @@ export default function Sidebar({
           <View style={[styles.divider, { backgroundColor: dividerColor }]} />
 
           {/* Nav Buttons */}
-          <NavItem icon="✦" label="New Game" onPress={onNewGame} scheme={scheme} />
-          <NavItem icon="⚄" label="Dice Roller" onPress={onDiceRolls} scheme={scheme} />
-          <NavItem icon="📖" label="Rules Reference" onPress={onRules} scheme={scheme} />
+          <NavItem icon={<MaterialCommunityIcons name="star-four-points" size={16} color={scheme.textSecondary} />} label="New Game" onPress={onNewGame} scheme={scheme} />
+          <NavItem icon={<MaterialCommunityIcons name="book-open-variant" size={16} color={scheme.textSecondary} />} label="Rules Reference" onPress={onRules} scheme={scheme} />
 
           <View style={[styles.divider, { backgroundColor: dividerColor }]} />
 
@@ -252,14 +250,14 @@ function NavItem({
   onPress,
   scheme,
 }: {
-  icon: string;
+  icon: React.ReactNode;
   label: string;
   onPress: () => void;
   scheme: ColorScheme;
 }) {
   return (
     <TouchableOpacity onPress={onPress} style={styles.navItem} activeOpacity={0.7}>
-      <Text style={[styles.navIcon, { color: scheme.textSecondary }]}>{icon}</Text>
+      <View style={styles.navIcon}>{icon}</View>
       <Text style={[styles.navLabel, { color: scheme.text }]}>{label}</Text>
     </TouchableOpacity>
   );
@@ -308,9 +306,9 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   navIcon: {
-    fontSize: 16,
     width: 22,
-    textAlign: 'center',
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
   },
   navLabel: {
     fontSize: 15,

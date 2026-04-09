@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import {
   View,
   Text,
@@ -14,6 +15,7 @@ import {
   Platform,
   Dimensions,
 } from 'react-native';
+import GlassHighlight from './GlassHighlight';
 import { BlurView } from 'expo-blur';
 import { ColorScheme } from '../../constants/colorSchemes';
 import { ColorSchemeId } from '../../types';
@@ -56,7 +58,7 @@ export default function PageSettingsPanel({
   const [editMode, setEditMode] = useState<EditMode>(null);
   const [addingComp, setAddingComp] = useState(false);
   const [newCompName, setNewCompName] = useState('');
-  const [newCompType, setNewCompType] = useState<'text' | 'list'>('text');
+  const [newCompType, setNewCompType] = useState<'text' | 'list' | 'number'>('text');
   const [kbHeight, setKbHeight] = useState(0);
 
   useEffect(() => {
@@ -190,14 +192,14 @@ export default function PageSettingsPanel({
             <View style={{ flex: 1 }}>
               <Text style={[styles.compName, { color: scheme.text }]}>{comp.name}</Text>
               <Text style={[styles.compType, { color: scheme.textMuted }]}>
-                {comp.type === 'list' ? 'List' : 'Text'}
+                {comp.type === 'list' ? 'List' : comp.type === 'number' ? 'Number' : 'Text'}
               </Text>
             </View>
             <TouchableOpacity
               onPress={() => handleRemoveCharComp(comp.id, comp.name)}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Text style={[styles.removeIcon, { color: scheme.destructive }]}>✕</Text>
+              <Ionicons name="close" size={16} color={scheme.destructive} />
             </TouchableOpacity>
           </View>
         ))}
@@ -216,6 +218,7 @@ export default function PageSettingsPanel({
             onPress={handleDeleteChar}
             style={[styles.deleteBtn, { borderColor: scheme.destructive + '55' }]}
           >
+            <GlassHighlight borderRadius={10} />
             <Text style={[styles.deleteBtnText, { color: scheme.destructive }]}>
               Delete Character
             </Text>
@@ -257,7 +260,7 @@ export default function PageSettingsPanel({
                       selectionColor={scheme.primary}
                     />
                     <View style={styles.typeRow}>
-                      {(['text', 'list'] as const).map((t) => (
+                      {(['text', 'list', 'number'] as const).map((t) => (
                         <TouchableOpacity
                           key={t}
                           onPress={() => setNewCompType(t)}
@@ -271,6 +274,7 @@ export default function PageSettingsPanel({
                             },
                           ]}
                         >
+                          <GlassHighlight borderRadius={8} />
                           <Text
                             style={[
                               styles.typeBtnText,
@@ -280,7 +284,7 @@ export default function PageSettingsPanel({
                               },
                             ]}
                           >
-                            {t === 'text' ? '📝 Text' : '📋 List'}
+                            {t === 'text' ? 'Text' : t === 'list' ? 'List' : 'Number'}
                           </Text>
                         </TouchableOpacity>
                       ))}
@@ -349,7 +353,7 @@ export default function PageSettingsPanel({
               onPress={() => handleRemoveCampComp(comp.id, comp.name)}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Text style={[styles.removeIcon, { color: scheme.destructive }]}>✕</Text>
+              <Ionicons name="close" size={16} color={scheme.destructive} />
             </TouchableOpacity>
           </View>
         ))}
@@ -368,6 +372,7 @@ export default function PageSettingsPanel({
             onPress={handleDeleteCamp}
             style={[styles.deleteBtn, { borderColor: scheme.destructive + '55' }]}
           >
+            <GlassHighlight borderRadius={10} />
             <Text style={[styles.deleteBtnText, { color: scheme.destructive }]}>
               Delete Campaign
             </Text>
@@ -409,7 +414,7 @@ export default function PageSettingsPanel({
                       selectionColor={scheme.primary}
                     />
                     <View style={styles.typeRow}>
-                      {(['text', 'list'] as const).map((t) => (
+                      {(['text', 'list', 'number'] as const).map((t) => (
                         <TouchableOpacity
                           key={t}
                           onPress={() => setNewCompType(t)}
@@ -423,6 +428,7 @@ export default function PageSettingsPanel({
                             },
                           ]}
                         >
+                          <GlassHighlight borderRadius={8} />
                           <Text
                             style={[
                               styles.typeBtnText,
@@ -431,7 +437,7 @@ export default function PageSettingsPanel({
                               },
                             ]}
                           >
-                            {t === 'text' ? '📝 Text' : '📋 List'}
+                            {t === 'text' ? 'Text' : t === 'list' ? 'List' : 'Number'}
                           </Text>
                         </TouchableOpacity>
                       ))}
@@ -494,6 +500,7 @@ export default function PageSettingsPanel({
                   },
                 ]}
               >
+                <GlassHighlight borderRadius={10} />
                 <Text style={[styles.editBtnText, { color: scheme.text }]}>
                   Edit Character
                 </Text>
@@ -512,6 +519,7 @@ export default function PageSettingsPanel({
                   },
                 ]}
               >
+                <GlassHighlight borderRadius={10} />
                 <Text style={[styles.editBtnText, { color: scheme.text }]}>
                   Edit Campaign
                 </Text>

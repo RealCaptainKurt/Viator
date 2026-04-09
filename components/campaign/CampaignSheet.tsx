@@ -6,8 +6,10 @@ import {
   TextInput,
   TouchableOpacity,
 } from 'react-native';
+import ModalOverlay from '../ui/ModalOverlay';
+import GlassButton from '../ui/GlassButton';
 import { COLOR_SCHEMES } from '../../constants/colorSchemes';
-import { Campaign, AdditionalListComponent, CollapsedSections } from '../../types';
+import { Campaign, AdditionalListComponent, AdditionalNumberComponent, CollapsedSections } from '../../types';
 import { useAppStore } from '../../store/appStore';
 import GlassCard from '../ui/GlassCard';
 import CollapsibleSection from '../ui/CollapsibleSection';
@@ -36,6 +38,7 @@ export default function CampaignSheet({ campaign, isStandalone, schemeOverride }
     updateCampaignListItem,
     removeCampaignListItem,
     updateCampaignComponentText,
+    updateCampaignComponentNumber,
     addCampaignComponentListItem,
     updateCampaignComponentListItem,
     removeCampaignComponentListItem,
@@ -48,6 +51,23 @@ export default function CampaignSheet({ campaign, isStandalone, schemeOverride }
     scenes: true,
   });
   const [adding, setAdding] = useState<AddingState>({ key: null });
+
+  // Number component edit state
+  const [editingNumberId, setEditingNumberId] = useState<string | null>(null);
+  const [draftNumber, setDraftNumber] = useState('0');
+
+  const openNumberModal = (comp: AdditionalNumberComponent) => {
+    setEditingNumberId(comp.id);
+    setDraftNumber(String(comp.value));
+  };
+  const adjustNumber = (delta: number) =>
+    setDraftNumber((v) => String((parseInt(v, 10) || 0) + delta));
+  const handleNumberSave = () => {
+    if (!editingNumberId) return;
+    const n = parseInt(draftNumber, 10);
+    if (!isNaN(n)) updateCampaignComponentNumber(campaign.id, editingNumberId, n);
+    setEditingNumberId(null);
+  };
 
   const toggle = (key: string) =>
     setCollapsed((s) => ({ ...s, [key]: !s[key] }));
@@ -148,66 +168,66 @@ export default function CampaignSheet({ campaign, isStandalone, schemeOverride }
       ))}
 
       {/* ── Additional Components ──────────────── */}
-      {campaign.additionalComponents.map((comp) => (
-        <CollapsibleSection
-          key={comp.id}
-          title={comp.name}
-          scheme={scheme}
-          collapsed={collapsed[comp.id] ?? false}
-          onToggle={() => toggle(comp.id)}
-          rightContent={
-            comp.type === 'list' ? (
-              <TouchableOpacity
-                onPress={() =>
-                  adding.key === comp.id
-                    ? stopAdding()
-                    : startAdding(comp.id, true)
-                }
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              >
-                <Text style={[styles.addBtn, { color: scheme.primary }]}>+</Text>
-              </TouchableOpacity>
-            ) : undefined
-          }
-        >
-          {comp.type === 'text' ? (
-            <TextContentRow
-              content={comp.content}
-              scheme={scheme}
-              placeholder={`Tap to add ${comp.name.toLowerCase()}...`}
+      {campaign.additionalComponents.map((comp) => {
+        if (comp.type === 'number') {
+          const numComp = comp as AdditionalNumberComponent;
+          return (
+            <CollapsibleSection
+              key={comp.id}
               title={comp.name}
-              onSave={(v) =>
-                updateCampaignComponentText(campaign.id, comp.id, comp.name, v)
+              scheme={scheme}
+              collapsed={collapsed[comp.id] ?? true}
+              onToggle={() => toggle(comp.id)}
+            >
+              <TouchableOpacity
+                onPress={() => openNumberModal(numComp)}
+                activeOpacity={0.7}
+                style={styles.numBox}
+              >
+                <Text style={[styles.numValue, { color: scheme.primary }]}>
+                  {numComp.value}
+                </Text>
+              </TouchableOpacity>
+            </CollapsibleSection>
+          );
+        }
+
+        if (comp.type === 'list') {
+          const listComp = comp as AdditionalListComponent;
+          return (
+            <CollapsibleSection
+              key={comp.id}
+              title={comp.name}
+              scheme={scheme}
+              collapsed={collapsed[comp.id] ?? false}
+              onToggle={() => toggle(comp.id)}
+              rightContent={
+                <TouchableOpacity
+                  onPress={() =>
+                    adding.key === comp.id ? stopAdding() : startAdding(comp.id, true)
+                  }
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Text style={[styles.addBtn, { color: scheme.primary }]}>+</Text>
+                </TouchableOpacity>
               }
-            />
-          ) : (
-            <>
-              {(comp as AdditionalListComponent).items.length === 0 ? (
+            >
+              {listComp.items.length === 0 ? (
                 <Text style={[styles.empty, { color: scheme.textMuted }]}>
                   Nothing here yet. Tap + to add.
                 </Text>
               ) : null}
-
-              {(comp as AdditionalListComponent).items.map((item) => (
+              {listComp.items.map((item) => (
                 <NamedItemRow
                   key={item.id}
                   item={item}
                   scheme={scheme}
                   onUpdate={(name, description) =>
-                    updateCampaignComponentListItem(
-                      campaign.id,
-                      comp.id,
-                      item.id,
-                      name,
-                      description
-                    )
+                    updateCampaignComponentListItem(campaign.id, comp.id, item.id, name, description)
                   }
-                  onRemove={() =>
-                    removeCampaignComponentListItem(campaign.id, comp.id, item.id)
-                  }
+                  onRemove={() => removeCampaignComponentListItem(campaign.id, comp.id, item.id)}
                 />
               ))}
-
               <AddItemRow
                 visible={adding.key === comp.id}
                 scheme={scheme}
@@ -218,10 +238,67 @@ export default function CampaignSheet({ campaign, isStandalone, schemeOverride }
                 }}
                 onCancel={stopAdding}
               />
-            </>
-          )}
-        </CollapsibleSection>
-      ))}
+            </CollapsibleSection>
+          );
+        }
+
+        // Text component
+        return (
+          <CollapsibleSection
+            key={comp.id}
+            title={comp.name}
+            scheme={scheme}
+            collapsed={collapsed[comp.id] ?? false}
+            onToggle={() => toggle(comp.id)}
+          >
+            <TextContentRow
+              content={(comp as { content: string }).content}
+              scheme={scheme}
+              placeholder={`Tap to add ${comp.name.toLowerCase()}...`}
+              title={comp.name}
+              onSave={(v) => updateCampaignComponentText(campaign.id, comp.id, comp.name, v)}
+            />
+          </CollapsibleSection>
+        );
+      })}
+
+      {/* ── Number Component Edit Modal ─────────── */}
+      <ModalOverlay
+        visible={editingNumberId !== null}
+        onClose={() => setEditingNumberId(null)}
+        scheme={scheme}
+        title={campaign.additionalComponents.find((c) => c.id === editingNumberId)?.name ?? ''}
+      >
+        <View style={styles.numModalRow}>
+          <TouchableOpacity
+            onPress={() => adjustNumber(-1)}
+            style={[styles.numAdjustBtn, { borderColor: scheme.surfaceBorder, backgroundColor: scheme.surface }]}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.numAdjustText, { color: scheme.destructive }]}>−</Text>
+          </TouchableOpacity>
+          <TextInput
+            value={draftNumber}
+            onChangeText={(v) => { if (v === '' || /^-?\d+$/.test(v)) setDraftNumber(v); }}
+            keyboardType="number-pad"
+            style={[styles.numModalInput, { color: scheme.primary, borderColor: scheme.surfaceBorder, backgroundColor: scheme.primaryMuted }]}
+            selectionColor={scheme.primary}
+            selectTextOnFocus
+            autoFocus
+          />
+          <TouchableOpacity
+            onPress={() => adjustNumber(1)}
+            style={[styles.numAdjustBtn, { borderColor: scheme.surfaceBorder, backgroundColor: scheme.surface }]}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.numAdjustText, { color: scheme.primary }]}>+</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.modalActions}>
+          <GlassButton label="Cancel" onPress={() => setEditingNumberId(null)} scheme={scheme} variant="ghost" small style={{ flex: 1 }} />
+          <GlassButton label="Save" onPress={handleNumberSave} scheme={scheme} variant="primary" small style={{ flex: 1 }} />
+        </View>
+      </ModalOverlay>
     </GlassCard>
   );
 }
@@ -249,5 +326,50 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     lineHeight: 24,
     paddingHorizontal: 4,
+  },
+  numBox: {
+    alignSelf: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 24,
+    borderRadius: 10,
+    marginVertical: 4,
+  },
+  numValue: {
+    fontSize: 36,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  numModalRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 20,
+  },
+  numAdjustBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  numAdjustText: {
+    fontSize: 24,
+    fontWeight: '700',
+    lineHeight: 28,
+  },
+  numModalInput: {
+    flex: 1,
+    minWidth: 0,
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 10,
+    fontSize: 22,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 8,
   },
 });
