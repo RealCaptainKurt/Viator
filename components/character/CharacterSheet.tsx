@@ -16,7 +16,6 @@ import { TRAIT_LEVELS } from '../../constants/traits';
 import { Character, AdditionalListComponent, AdditionalNumberComponent, AdditionalTextComponent, CollapsedSections } from '../../types';
 import { useAppStore } from '../../store/appStore';
 import GlassCard from '../ui/GlassCard';
-import GlassHighlight from '../ui/GlassHighlight';
 import CollapsibleSection from '../ui/CollapsibleSection';
 import TraitRow from './TraitRow';
 import GlassButton from '../ui/GlassButton';
@@ -134,60 +133,64 @@ export default function CharacterSheet({ character }: Props) {
       onRequestClose={resetAddComp}
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : Platform.OS === 'android' ? 'height' : undefined}
         style={{ flex: 1 }}
       >
         <TouchableWithoutFeedback onPress={resetAddComp}>
           <View style={styles.modalOverlay}>
             <TouchableWithoutFeedback onPress={() => {}}>
-              <GlassCard scheme={scheme} style={styles.modalCard}>
-                <Text style={[styles.modalTitle, { color: scheme.text }]}>New Section</Text>
-                <TextInput
-                  value={newCompName}
-                  onChangeText={setNewCompName}
-                  placeholder="Section name (e.g. Equipment, Notes)"
-                  placeholderTextColor={scheme.textMuted}
-                  style={[
-                    styles.modalInput,
-                    {
-                      color: scheme.text,
-                      borderColor: scheme.surfaceBorder,
-                      backgroundColor: scheme.primaryMuted,
-                    },
-                  ]}
-                  autoFocus
-                  selectionColor={scheme.primary}
-                />
-                <View style={styles.typeRow}>
-                  {(['text', 'list'] as const).map((t) => (
-                    <TouchableOpacity
-                      key={t}
-                      onPress={() => setNewCompType(t)}
-                      style={[
-                        styles.typeBtn,
-                        {
-                          backgroundColor: newCompType === t ? scheme.primaryMuted : scheme.surface,
-                          borderColor: newCompType === t ? scheme.primary : scheme.surfaceBorder,
-                        },
-                      ]}
-                    >
-                      <GlassHighlight borderRadius={8} />
-                      <Text
+              <View
+                // @ts-ignore - web only: stops click from bubbling to backdrop dismiss handler
+                onClick={(e: any) => e.stopPropagation()}
+              >
+                <GlassCard scheme={scheme} style={styles.modalCard}>
+                  <Text style={[styles.modalTitle, { color: scheme.text }]}>New Section</Text>
+                  <TextInput
+                    value={newCompName}
+                    onChangeText={setNewCompName}
+                    placeholder="Section name (e.g. Equipment, Notes)"
+                    placeholderTextColor={scheme.textMuted}
+                    style={[
+                      styles.modalInput,
+                      {
+                        color: scheme.text,
+                        borderColor: scheme.surfaceBorder,
+                        backgroundColor: scheme.primaryMuted,
+                      },
+                    ]}
+                    autoFocus
+                    selectionColor={scheme.primary}
+                  />
+                  <View style={styles.typeRow}>
+                    {(['text', 'list'] as const).map((t) => (
+                      <TouchableOpacity
+                        key={t}
+                        onPress={() => setNewCompType(t)}
                         style={[
-                          styles.typeBtnText,
-                          { color: newCompType === t ? scheme.primary : scheme.textSecondary },
+                          styles.typeBtn,
+                          {
+                            backgroundColor: newCompType === t ? scheme.primaryMuted : scheme.surface,
+                            borderColor: newCompType === t ? scheme.primary : scheme.surfaceBorder,
+                          },
                         ]}
                       >
-                        {COMP_TYPE_LABEL[t]}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-                <View style={styles.modalActions}>
-                  <GlassButton label="Cancel" onPress={resetAddComp} scheme={scheme} variant="ghost" small style={{ flex: 1 }} />
-                  <GlassButton label="Add" onPress={handleAddComp} scheme={scheme} variant="primary" small style={{ flex: 1 }} disabled={!newCompName.trim()} />
-                </View>
-              </GlassCard>
+                        <Text
+                          style={[
+                            styles.typeBtnText,
+                            { color: newCompType === t ? scheme.primary : scheme.textSecondary },
+                          ]}
+                        >
+                          {COMP_TYPE_LABEL[t]}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                  <View style={styles.modalActions}>
+                    <GlassButton label="Cancel" onPress={resetAddComp} scheme={scheme} variant="ghost" small style={{ flex: 1 }} />
+                    <GlassButton label="Add" onPress={handleAddComp} scheme={scheme} variant="primary" small style={{ flex: 1 }} disabled={!newCompName.trim()} />
+                  </View>
+                </GlassCard>
+              </View>
             </TouchableWithoutFeedback>
           </View>
         </TouchableWithoutFeedback>
@@ -501,6 +504,7 @@ const styles = StyleSheet.create({
   },
   nameInput: {
     flex: 1,
+    minWidth: 0,
     fontSize: 22,
     fontWeight: '700',
     letterSpacing: 0.3,

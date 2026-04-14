@@ -1,4 +1,3 @@
-import GlassHighlight from '../ui/GlassHighlight';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useRef, useState } from 'react';
@@ -60,7 +59,7 @@ export default function OracleModal({ visible, onClose, scheme }: Props) {
   });
 
   return (
-    <ModalSheet visible={visible} onClose={onClose} scheme={scheme} height="75%">
+    <ModalSheet visible={visible} onClose={onClose} scheme={scheme} height="85%">
       {/* Header */}
       <View style={styles.header}>
         <Text style={[styles.title, { color: scheme.text }]}>Oracle</Text>
@@ -71,7 +70,6 @@ export default function OracleModal({ visible, onClose, scheme }: Props) {
         >
           <BlurView intensity={20} tint={scheme.blurTint} style={[StyleSheet.absoluteFillObject, { borderRadius: 28 }]} />
           <View style={[StyleSheet.absoluteFillObject, { backgroundColor: scheme.surface, borderRadius: 28 }]} />
-          <GlassHighlight borderRadius={28} />
           <Ionicons name="close" size={22} color={scheme.textSecondary} />
         </TouchableOpacity>
       </View>

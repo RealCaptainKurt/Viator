@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import GlassHighlight from './GlassHighlight';
 import { BlurView } from 'expo-blur';
 import { ColorScheme } from '../../constants/colorSchemes';
 
@@ -27,7 +26,6 @@ export default function FloatingToolbar({ scheme, onDicePress, onOraclePress }: 
               style={StyleSheet.absoluteFillObject}
             />
             <View style={[StyleSheet.absoluteFillObject, { backgroundColor: scheme.surface }]} />
-            <GlassHighlight borderRadius={FAB_SIZE / 2} />
           </View>
           <MaterialCommunityIcons name="dice-multiple" size={24} color={scheme.text} />
         </TouchableOpacity>
@@ -44,7 +42,6 @@ export default function FloatingToolbar({ scheme, onDicePress, onOraclePress }: 
               style={StyleSheet.absoluteFillObject}
             />
             <View style={[StyleSheet.absoluteFillObject, { backgroundColor: scheme.surface }]} />
-            <GlassHighlight borderRadius={FAB_SIZE / 2} />
           </View>
           <MaterialCommunityIcons name="script-text" size={24} color={scheme.text} />
         </TouchableOpacity>

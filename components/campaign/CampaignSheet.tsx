@@ -16,7 +16,6 @@ import { COLOR_SCHEMES } from '../../constants/colorSchemes';
 import { Campaign, AdditionalListComponent, AdditionalNumberComponent, AdditionalTextComponent, CollapsedSections, NamedItem } from '../../types';
 import { useAppStore } from '../../store/appStore';
 import GlassCard from '../ui/GlassCard';
-import GlassHighlight from '../ui/GlassHighlight';
 import GlassButton from '../ui/GlassButton';
 import CollapsibleSection from '../ui/CollapsibleSection';
 import TextContentRow from '../ui/TextContentRow';
@@ -118,7 +117,7 @@ export default function CampaignSheet({ campaign, isStandalone, schemeOverride }
       onRequestClose={resetAddComp}
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : Platform.OS === 'android' ? 'height' : undefined}
         style={{ flex: 1 }}
       >
         <TouchableWithoutFeedback onPress={resetAddComp}>
@@ -151,7 +150,6 @@ export default function CampaignSheet({ campaign, isStandalone, schemeOverride }
                         },
                       ]}
                     >
-                      <GlassHighlight borderRadius={8} />
                       <Text style={[styles.typeBtnText, { color: newCompType === t ? scheme.primary : scheme.textSecondary }]}>
                         {COMP_TYPE_LABEL[t]}
                       </Text>

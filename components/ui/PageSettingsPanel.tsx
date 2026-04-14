@@ -7,7 +7,6 @@ import {
   TouchableWithoutFeedback,
   ScrollView,
 } from 'react-native';
-import GlassHighlight from './GlassHighlight';
 import { BlurView } from 'expo-blur';
 import { ColorScheme } from '../../constants/colorSchemes';
 import { ColorSchemeId } from '../../types';
@@ -122,7 +121,6 @@ export default function PageSettingsPanel({
                         },
                       ]}
                     >
-                      <GlassHighlight borderRadius={10} />
                       <Text style={[styles.editBtnText, { color: isEditMode ? scheme.primary : scheme.text }]}>
                         Edit Mode
                       </Text>
@@ -137,8 +135,7 @@ export default function PageSettingsPanel({
                         onBlur={() => setConfirmDelete(null)}
                         style={[styles.deleteBtn, { borderColor: scheme.destructive + '55', marginTop: 8 }]}
                       >
-                        <GlassHighlight borderRadius={10} />
-                        <Text style={[styles.deleteBtnText, { color: scheme.destructive }]}>
+                          <Text style={[styles.deleteBtnText, { color: scheme.destructive }]}>
                           {confirmDelete === 'char' ? 'Tap again to confirm' : 'Delete Character'}
                         </Text>
                       </TouchableOpacity>
@@ -149,8 +146,7 @@ export default function PageSettingsPanel({
                         onBlur={() => setConfirmDelete(null)}
                         style={[styles.deleteBtn, { borderColor: scheme.destructive + '55', marginTop: char ? 8 : 0 }]}
                       >
-                        <GlassHighlight borderRadius={10} />
-                        <Text style={[styles.deleteBtnText, { color: scheme.destructive }]}>
+                          <Text style={[styles.deleteBtnText, { color: scheme.destructive }]}>
                           {confirmDelete === 'camp' ? 'Tap again to confirm' : 'Delete Campaign'}
                         </Text>
                       </TouchableOpacity>

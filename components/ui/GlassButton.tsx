@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
   View,
 } from 'react-native';
-import GlassHighlight from './GlassHighlight';
 import { BlurView } from 'expo-blur';
 import { ColorScheme } from '../../constants/colorSchemes';
 
@@ -84,7 +83,6 @@ export default function GlassButton({
         tint={scheme.blurTint}
         style={[StyleSheet.absoluteFillObject, { borderRadius }]}
       />
-      <GlassHighlight borderRadius={borderRadius} />
       {loading ? (
         <ActivityIndicator size="small" color={color} />
       ) : (
