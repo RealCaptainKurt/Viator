@@ -7,7 +7,6 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
-import GlassHighlight from '../ui/GlassHighlight';
 import { BlurView } from 'expo-blur';
 import { ColorScheme } from '../../constants/colorSchemes';
 import GlassButton from '../ui/GlassButton';
@@ -96,7 +95,6 @@ export default function DiceModal({ visible, onClose, scheme }: Props) {
             },
           ]}
         >
-          <GlassHighlight borderRadius={10} />
           <Text
             style={[
               styles.dieBtnText,
@@ -122,7 +120,6 @@ export default function DiceModal({ visible, onClose, scheme }: Props) {
         >
           <BlurView intensity={20} tint={scheme.blurTint} style={[StyleSheet.absoluteFillObject, { borderRadius: 28 }]} />
           <View style={[StyleSheet.absoluteFillObject, { backgroundColor: scheme.surface, borderRadius: 28 }]} />
-          <GlassHighlight borderRadius={28} />
           <Ionicons name="close" size={22} color={scheme.textSecondary} />
         </TouchableOpacity>
       </View>
@@ -178,7 +175,6 @@ export default function DiceModal({ visible, onClose, scheme }: Props) {
               onPress={() => setCount((c) => Math.max(1, c - 1))}
               style={[styles.spinBtn, { borderColor: scheme.surfaceBorder }]}
             >
-              <GlassHighlight borderRadius={8} />
               <Text style={{ color: scheme.text, fontSize: 18 }}>−</Text>
             </TouchableOpacity>
             <Text style={[styles.spinValue, { color: scheme.text }]}>{count}</Text>
@@ -186,7 +182,6 @@ export default function DiceModal({ visible, onClose, scheme }: Props) {
               onPress={() => setCount((c) => Math.min(20, c + 1))}
               style={[styles.spinBtn, { borderColor: scheme.surfaceBorder }]}
             >
-              <GlassHighlight borderRadius={8} />
               <Text style={{ color: scheme.text, fontSize: 18 }}>+</Text>
             </TouchableOpacity>
           </View>
@@ -199,7 +194,6 @@ export default function DiceModal({ visible, onClose, scheme }: Props) {
               onPress={() => setModifier((m) => m - 1)}
               style={[styles.spinBtn, { borderColor: scheme.surfaceBorder }]}
             >
-              <GlassHighlight borderRadius={8} />
               <Text style={{ color: scheme.text, fontSize: 18 }}>−</Text>
             </TouchableOpacity>
             <Text style={[styles.spinValue, { color: scheme.text }]}>
@@ -209,7 +203,6 @@ export default function DiceModal({ visible, onClose, scheme }: Props) {
               onPress={() => setModifier((m) => m + 1)}
               style={[styles.spinBtn, { borderColor: scheme.surfaceBorder }]}
             >
-              <GlassHighlight borderRadius={8} />
               <Text style={{ color: scheme.text, fontSize: 18 }}>+</Text>
             </TouchableOpacity>
           </View>

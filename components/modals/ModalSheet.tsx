@@ -39,7 +39,7 @@ export default function ModalSheet({
   visible,
   onClose,
   scheme,
-  height = '75%',
+  height = '85%',
   keyboardAvoiding = false,
   contentStyle,
   children,

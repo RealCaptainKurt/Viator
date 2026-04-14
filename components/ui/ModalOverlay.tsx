@@ -44,23 +44,32 @@ export default function ModalOverlay({
       onRequestClose={onClose}
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : Platform.OS === 'android' ? 'height' : undefined}
         style={styles.flex}
       >
         <TouchableWithoutFeedback onPress={onClose}>
           <View style={styles.overlay}>
+            {/* On web, DOM clicks bubble so we stop propagation at the card to prevent
+                the outer TouchableWithoutFeedback from closing the modal when
+                tapping inputs inside the card. On native the onClick prop is ignored
+                and the nested TouchableWithoutFeedback responder chain handles it. */}
             <TouchableWithoutFeedback onPress={() => {}}>
-              <GlassCard
-                scheme={scheme}
-                style={cardStyle ? [styles.card, { maxWidth }, cardStyle] : [styles.card, { maxWidth }]}
+              <View
+                // @ts-ignore - web only: stops click from bubbling to backdrop dismiss handler
+                onClick={(e: any) => e.stopPropagation()}
               >
-                {title ? (
-                  <Text style={[styles.title, { color: scheme.text }]}>
-                    {title}
-                  </Text>
-                ) : null}
-                {children}
-              </GlassCard>
+                <GlassCard
+                  scheme={scheme}
+                  style={cardStyle ? [styles.card, { maxWidth }, cardStyle] : [styles.card, { maxWidth }]}
+                >
+                  {title ? (
+                    <Text style={[styles.title, { color: scheme.text }]}>
+                      {title}
+                    </Text>
+                  ) : null}
+                  {children}
+                </GlassCard>
+              </View>
             </TouchableWithoutFeedback>
           </View>
         </TouchableWithoutFeedback>
