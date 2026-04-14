@@ -9,7 +9,6 @@ import {
   Modal,
   KeyboardAvoidingView,
   Platform,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import NumberEditModal from '../ui/NumberEditModal';
@@ -86,16 +85,15 @@ export default function CampaignSheet({ campaign, isStandalone, schemeOverride }
 
   const stopAdding = () => setAdding({ key: null });
 
+  const [confirmSectionId, setConfirmSectionId] = useState<string | null>(null);
+
   const handleRemoveSection = (sectionId: string) => {
-    const listDef = LIST_CONFIG[sectionId];
-    const name =
-      sectionId === '__currentScene' ? 'Current Scene'
-      : listDef ? listDef.label
-      : campaign.additionalComponents.find((c) => c.id === sectionId)?.name ?? 'this section';
-    Alert.alert('Remove Section', `Remove "${name}" from the sheet?`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Remove', style: 'destructive', onPress: () => removeCampaignSection(campaign.id, sectionId) },
-    ]);
+    if (confirmSectionId === sectionId) {
+      removeCampaignSection(campaign.id, sectionId);
+      setConfirmSectionId(null);
+    } else {
+      setConfirmSectionId(sectionId);
+    }
   };
 
   const resetAddComp = () => {
@@ -217,9 +215,14 @@ export default function CampaignSheet({ campaign, isStandalone, schemeOverride }
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => handleRemoveSection(sectionId)}
+              onBlur={() => setConfirmSectionId(null)}
               hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
             >
-              <Ionicons name="close-circle" size={18} color={scheme.destructive} />
+              {confirmSectionId === sectionId ? (
+                <Text style={[styles.reorderArrow, { color: scheme.destructive, fontSize: 10 }]}>✓?</Text>
+              ) : (
+                <Ionicons name="close-circle" size={18} color={scheme.destructive} />
+              )}
             </TouchableOpacity>
           </View>
         ) : null;

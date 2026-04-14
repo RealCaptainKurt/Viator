@@ -5,7 +5,6 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Alert,
 } from 'react-native';
 import { ColorScheme } from '../../constants/colorSchemes';
 import { TRAIT_LEVELS } from '../../constants/traits';
@@ -37,10 +36,7 @@ export default function TraitRow({ trait, scheme, onUpdate, onRemove, onMoveUp, 
   };
 
   const handleRemove = () => {
-    Alert.alert('Remove Trait', `Remove "${trait.name}"?`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Remove', style: 'destructive', onPress: onRemove },
-    ]);
+    onRemove();
   };
 
   return (

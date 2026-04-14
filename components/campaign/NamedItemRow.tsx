@@ -5,7 +5,6 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Alert,
 } from 'react-native';
 import { ColorScheme } from '../../constants/colorSchemes';
 import { NamedItem } from '../../types';
@@ -48,10 +47,7 @@ export default function NamedItemRow({
   };
 
   const handleRemove = () => {
-    Alert.alert('Remove', `Remove "${item.name}"?`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Remove', style: 'destructive', onPress: onRemove },
-    ]);
+    onRemove();
   };
 
   const showMoveButtons = onMoveUp !== undefined || onMoveDown !== undefined;
@@ -145,12 +141,7 @@ export default function NamedItemRow({
             label="Remove"
             onPress={() => {
               setEditing(false);
-              setTimeout(() => {
-                Alert.alert('Remove', `Remove "${item.name}"?`, [
-                  { text: 'Cancel', style: 'cancel' },
-                  { text: 'Remove', style: 'destructive', onPress: onRemove },
-                ]);
-              }, 200);
+              setTimeout(onRemove, 200);
             }}
             scheme={scheme}
             variant="destructive"

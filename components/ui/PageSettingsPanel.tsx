@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   ScrollView,
-  Alert,
 } from 'react-native';
 import GlassHighlight from './GlassHighlight';
 import { BlurView } from 'expo-blur';
@@ -39,6 +38,8 @@ export default function PageSettingsPanel({
     toggleEditMode,
   } = useAppStore();
 
+  const [confirmDelete, setConfirmDelete] = useState<'char' | 'camp' | null>(null);
+
   const char = activeCharacterId ? characters[activeCharacterId] : null;
   const camp = activeCampaignId ? campaigns[activeCampaignId] : null;
 
@@ -60,26 +61,22 @@ export default function PageSettingsPanel({
 
   const handleDeleteChar = () => {
     if (!char) return;
-    Alert.alert('Delete Character', `Permanently delete "${char.name}"? This cannot be undone.`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: () => { removeCharacter(char.id); onDismiss(); },
-      },
-    ]);
+    if (confirmDelete === 'char') {
+      removeCharacter(char.id);
+      onDismiss();
+    } else {
+      setConfirmDelete('char');
+    }
   };
 
   const handleDeleteCamp = () => {
     if (!camp) return;
-    Alert.alert('Delete Campaign', `Permanently delete "${camp.name}"? This cannot be undone.`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: () => { removeCampaign(camp.id); onDismiss(); },
-      },
-    ]);
+    if (confirmDelete === 'camp') {
+      removeCampaign(camp.id);
+      onDismiss();
+    } else {
+      setConfirmDelete('camp');
+    }
   };
 
   return (
@@ -137,22 +134,24 @@ export default function PageSettingsPanel({
                     {char && (
                       <TouchableOpacity
                         onPress={handleDeleteChar}
+                        onBlur={() => setConfirmDelete(null)}
                         style={[styles.deleteBtn, { borderColor: scheme.destructive + '55', marginTop: 8 }]}
                       >
                         <GlassHighlight borderRadius={10} />
                         <Text style={[styles.deleteBtnText, { color: scheme.destructive }]}>
-                          Delete Character
+                          {confirmDelete === 'char' ? 'Tap again to confirm' : 'Delete Character'}
                         </Text>
                       </TouchableOpacity>
                     )}
                     {camp && (
                       <TouchableOpacity
                         onPress={handleDeleteCamp}
+                        onBlur={() => setConfirmDelete(null)}
                         style={[styles.deleteBtn, { borderColor: scheme.destructive + '55', marginTop: char ? 8 : 0 }]}
                       >
                         <GlassHighlight borderRadius={10} />
                         <Text style={[styles.deleteBtnText, { color: scheme.destructive }]}>
-                          Delete Campaign
+                          {confirmDelete === 'camp' ? 'Tap again to confirm' : 'Delete Campaign'}
                         </Text>
                       </TouchableOpacity>
                     )}

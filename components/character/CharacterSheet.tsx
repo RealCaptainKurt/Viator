@@ -9,7 +9,6 @@ import {
   Modal,
   KeyboardAvoidingView,
   Platform,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLOR_SCHEMES } from '../../constants/colorSchemes';
@@ -102,15 +101,15 @@ export default function CharacterSheet({ character }: Props) {
     setShowAddTrait(false);
   };
 
+  const [confirmSectionId, setConfirmSectionId] = useState<string | null>(null);
+
   const handleRemoveSection = (sectionId: string) => {
-    const name =
-      sectionId === '__description' ? 'Description'
-      : sectionId === '__traits' ? 'Traits'
-      : character.additionalComponents.find((c) => c.id === sectionId)?.name ?? 'this section';
-    Alert.alert('Remove Section', `Remove "${name}" from the sheet?`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Remove', style: 'destructive', onPress: () => removeCharacterSection(character.id, sectionId) },
-    ]);
+    if (confirmSectionId === sectionId) {
+      removeCharacterSection(character.id, sectionId);
+      setConfirmSectionId(null);
+    } else {
+      setConfirmSectionId(sectionId);
+    }
   };
 
   const resetAddComp = () => {
@@ -270,9 +269,14 @@ export default function CharacterSheet({ character }: Props) {
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => handleRemoveSection(sectionId)}
+              onBlur={() => setConfirmSectionId(null)}
               hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
             >
-              <Ionicons name="close-circle" size={18} color={scheme.destructive} />
+              {confirmSectionId === sectionId ? (
+                <Text style={[styles.reorderArrow, { color: scheme.destructive, fontSize: 10 }]}>✓?</Text>
+              ) : (
+                <Ionicons name="close-circle" size={18} color={scheme.destructive} />
+              )}
             </TouchableOpacity>
           </View>
         ) : null;

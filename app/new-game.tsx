@@ -7,8 +7,8 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Alert,
   BackHandler,
+  Platform,
 } from 'react-native';
 import { router, Stack } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -46,16 +46,11 @@ export default function NewGameScreen() {
 
   const hasUnsavedData = step !== 'choose_type' || charName.length > 0 || traits.length > 0;
 
+  const [showDiscardWarning, setShowDiscardWarning] = useState(false);
+
   const confirmClose = useCallback(() => {
     if (hasUnsavedData) {
-      Alert.alert(
-        'Discard changes?',
-        'You have unsaved progress. Are you sure you want to go back?',
-        [
-          { text: 'Keep editing', style: 'cancel' },
-          { text: 'Discard', style: 'destructive', onPress: () => router.back() },
-        ]
-      );
+      setShowDiscardWarning(true);
     } else {
       router.back();
     }
@@ -63,6 +58,7 @@ export default function NewGameScreen() {
 
   // Intercept Android hardware back button
   useEffect(() => {
+    if (Platform.OS === 'web') return;
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
       confirmClose();
       return true;
@@ -88,10 +84,7 @@ export default function NewGameScreen() {
   };
 
   const handleConfirmCharacter = () => {
-    if (!charName.trim()) {
-      Alert.alert('Name required', 'Please enter a character name.');
-      return;
-    }
+    if (!charName.trim()) return;
     setStep('ask_campaign');
   };
 
@@ -138,6 +131,29 @@ export default function NewGameScreen() {
           <Text style={[styles.headerTitle, { color: scheme.text }]}>{stepTitle}</Text>
           <View style={styles.headerBtn} />
         </View>
+
+        {/* ── Discard Warning ─────────────────────── */}
+        {showDiscardWarning && (
+          <View style={[styles.discardBanner, { backgroundColor: scheme.primaryMuted, borderColor: scheme.destructive + '55' }]}>
+            <Text style={[styles.discardText, { color: scheme.text }]}>
+              Discard unsaved progress?
+            </Text>
+            <View style={styles.discardActions}>
+              <TouchableOpacity
+                onPress={() => setShowDiscardWarning(false)}
+                style={[styles.discardBtn, { borderColor: scheme.surfaceBorder }]}
+              >
+                <Text style={[styles.discardBtnText, { color: scheme.textSecondary }]}>Keep editing</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => router.back()}
+                style={[styles.discardBtn, { borderColor: scheme.destructive + '55', backgroundColor: scheme.destructive + '22' }]}
+              >
+                <Text style={[styles.discardBtnText, { color: scheme.destructive }]}>Discard</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
 
         {/* ── Content ────────────────────────────── */}
         <ScrollView
@@ -556,5 +572,33 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
     marginTop: 20,
+  },
+  discardBanner: {
+    marginHorizontal: 16,
+    marginBottom: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 12,
+    gap: 10,
+  },
+  discardText: {
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  discardActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  discardBtn: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  discardBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
 });
