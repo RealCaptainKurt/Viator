@@ -10,9 +10,9 @@ import { ColorScheme } from '../../constants/colorSchemes';
 import { TRAIT_LEVELS } from '../../constants/traits';
 import { Trait } from '../../types';
 import { useAppStore } from '../../store/appStore';
-import GlassInput from '../ui/GlassInput';
-import GlassButton from '../ui/GlassButton';
-import ModalOverlay from '../ui/ModalOverlay';
+import GlassInput from './GlassInput';
+import GlassButton from './GlassButton';
+import ModalOverlay from './ModalOverlay';
 
 interface Props {
   trait: Trait;

@@ -5,8 +5,8 @@ import {
   StyleSheet,
 } from 'react-native';
 import { ColorScheme } from '../../constants/colorSchemes';
-import GlassButton from '../ui/GlassButton';
-import ModalOverlay from '../ui/ModalOverlay';
+import GlassButton from './GlassButton';
+import ModalOverlay from './ModalOverlay';
 
 interface Props {
   visible: boolean;

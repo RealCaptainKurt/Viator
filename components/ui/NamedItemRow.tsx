@@ -9,9 +9,10 @@ import {
 import { ColorScheme } from '../../constants/colorSchemes';
 import { NamedItem } from '../../types';
 import { useAppStore } from '../../store/appStore';
-import GlassInput from '../ui/GlassInput';
-import GlassButton from '../ui/GlassButton';
-import ModalOverlay from '../ui/ModalOverlay';
+import GlassInput from './GlassInput';
+import GlassButton from './GlassButton';
+import ModalOverlay from './ModalOverlay';
+import EditControls from './EditControls';
 
 interface Props {
   item: NamedItem;
@@ -46,74 +47,55 @@ export default function NamedItemRow({
     setEditing(false);
   };
 
-  const handleRemove = () => {
-    onRemove();
+  const openEdit = () => {
+    setEditName(item.name);
+    setEditDesc(item.description);
+    setEditing(true);
   };
-
-  const showMoveButtons = onMoveUp !== undefined || onMoveDown !== undefined;
 
   return (
     <>
-      <TouchableOpacity
-        onPress={() => setExpanded((v) => !v)}
-        onLongPress={() => {
-          setEditName(item.name);
-          setEditDesc(item.description);
-          setEditing(true);
-        }}
-        activeOpacity={0.75}
-        style={styles.row}
-      >
-        <Text style={[styles.arrow, { color: arrowColor }]}>
-          {expanded ? '⌄' : '›'}
-        </Text>
-        <View style={{ flex: 1 }}>
-          <Text style={[styles.name, { color: scheme.text }]}>{item.name}</Text>
-          {expanded && (
-            <Text style={[
-              styles.desc,
-              { color: item.description ? scheme.textSecondary : scheme.textMuted,
-                fontStyle: item.description ? 'normal' : 'italic' },
-            ]}>
-              {item.description || 'No description, tap to edit.'}
-            </Text>
+      <View style={[styles.card, { borderColor: scheme.surfaceBorder }]}>
+        {/* Header row — always visible */}
+        <TouchableOpacity
+          onPress={() => setExpanded((v) => !v)}
+          onLongPress={openEdit}
+          activeOpacity={0.75}
+          style={styles.headerRow}
+        >
+          <Text style={[styles.arrow, { color: arrowColor }]}>
+            {expanded ? '⌄' : '›'}
+          </Text>
+          <Text style={[styles.name, { color: scheme.text, flex: 1 }]}>{item.name}</Text>
+          
+          {isEditMode && (
+            <EditControls
+              scheme={scheme}
+              onMoveUp={onMoveUp}
+              onMoveDown={onMoveDown}
+              onRemove={onRemove}
+            />
           )}
-        </View>
-        {showMoveButtons && (
-          <View style={styles.moveButtons}>
-            <TouchableOpacity
-              onPress={onMoveUp}
-              hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
-            >
-              <Text style={[styles.moveArrow, { color: onMoveUp ? scheme.primary : scheme.textMuted }]}>↑</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={onMoveDown}
-              hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
-            >
-              <Text style={[styles.moveArrow, { color: onMoveDown ? scheme.primary : scheme.textMuted }]}>↓</Text>
-            </TouchableOpacity>
+        </TouchableOpacity>
+
+        {/* Expanded body — description + edit icon */}
+        {expanded && (
+          <View style={styles.expandedBody}>
+            <View style={styles.descRow}>
+              <Text style={[
+                styles.desc,
+                { flex: 1, color: item.description ? scheme.textSecondary : scheme.textMuted,
+                  fontStyle: item.description ? 'normal' : 'italic' },
+              ]}>
+                {item.description || 'No description — tap to edit.'}
+              </Text>
+              <TouchableOpacity onPress={openEdit} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={styles.editBtn}>
+                <Feather name="edit-2" size={13} color={scheme.textMuted} />
+              </TouchableOpacity>
+            </View>
           </View>
         )}
-        <TouchableOpacity
-          onPress={() => {
-            setEditName(item.name);
-            setEditDesc(item.description);
-            setEditing(true);
-          }}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Feather name="edit-2" size={14} color={scheme.textMuted} style={{ paddingTop: 2 }} />
-        </TouchableOpacity>
-        {isEditMode && (
-          <TouchableOpacity
-            onPress={handleRemove}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Ionicons name="close-circle" size={18} color={scheme.destructive} />
-          </TouchableOpacity>
-        )}
-      </TouchableOpacity>
+      </View>
 
       <ModalOverlay
         visible={editing}
@@ -139,10 +121,7 @@ export default function NamedItemRow({
         <View style={styles.actions}>
           <GlassButton
             label="Remove"
-            onPress={() => {
-              setEditing(false);
-              setTimeout(onRemove, 200);
-            }}
+            onPress={() => { setEditing(false); setTimeout(onRemove, 200); }}
             scheme={scheme}
             variant="destructive"
             small
@@ -172,17 +151,21 @@ export default function NamedItemRow({
 }
 
 const styles = StyleSheet.create({
-  row: {
+  card: {
+    borderWidth: 1,
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  headerRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    paddingVertical: 10,
-    paddingLeft: 4,
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 10,
     gap: 10,
   },
   arrow: {
     fontSize: 14,
     fontWeight: '700',
-    marginTop: 2,
     width: 14,
     textAlign: 'center',
   },
@@ -190,20 +173,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
+  expandedBody: {
+    paddingHorizontal: 14,
+    paddingBottom: 8,
+    paddingTop: 2,
+  },
+  descRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 6,
+  },
   desc: {
     fontSize: 13,
     lineHeight: 18,
-    marginTop: 3,
   },
-  moveButtons: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: 2,
-  },
-  moveArrow: {
-    fontSize: 13,
-    fontWeight: '700',
-    lineHeight: 16,
+  editBtn: {
+    paddingTop: 2,
   },
   actions: {
     flexDirection: 'row',

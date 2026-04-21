@@ -64,10 +64,6 @@ const SOLO_SECTIONS: RulesSection[] = [
     title: "Scene Management",
     content: "",
   },
-  {
-    title: "Mythic GM Emulator",
-    content: "",
-  },
 ];
 
 const VIATOR_SECTIONS: RulesSection[] = [

@@ -26,7 +26,7 @@ type Step = 'choose_type' | 'character_info' | 'ask_campaign';
 interface TraitDraft {
   id: string;
   name: string;
-  level: number;
+  value: number;
 }
 
 export default function NewGameScreen() {
@@ -42,7 +42,7 @@ export default function NewGameScreen() {
   const [traits, setTraits] = useState<TraitDraft[]>([]);
   const [addingTrait, setAddingTrait] = useState(false);
   const [newTraitName, setNewTraitName] = useState('');
-  const [newTraitLevel, setNewTraitLevel] = useState(1);
+  const [newTraitValue, setNewTraitValue] = useState('0');
 
   const hasUnsavedData = step !== 'choose_type' || charName.length > 0 || traits.length > 0;
 
@@ -76,10 +76,10 @@ export default function NewGameScreen() {
     if (!newTraitName.trim()) return;
     setTraits((t) => [
       ...t,
-      { id: generateId(), name: newTraitName.trim(), level: newTraitLevel },
+      { id: generateId(), name: newTraitName.trim(), value: parseInt(newTraitValue, 10) || 0 },
     ]);
     setNewTraitName('');
-    setNewTraitLevel(1);
+    setNewTraitValue('0');
     setAddingTrait(false);
   };
 
@@ -92,7 +92,7 @@ export default function NewGameScreen() {
     const char = createCharacter(
       charName.trim(),
       charDesc.trim(),
-      traits.map((t) => ({ name: t.name, level: t.level })),
+      traits.map((t) => ({ name: t.name, value: t.value })),
       colorScheme
     );
     if (withCampaign) {
@@ -245,21 +245,7 @@ export default function NewGameScreen() {
                   ]}
                 >
                   <Text style={[styles.traitChipName, { color: scheme.text }]}>{t.name}</Text>
-                  <View style={styles.traitChipPips}>
-                    {[1, 2, 3, 4, 5, 6].map((l) => (
-                      <View
-                        key={l}
-                        style={[
-                          styles.pip,
-                          {
-                            backgroundColor:
-                              l <= t.level ? scheme.levelColors[t.level - 1] : scheme.surface,
-                            borderColor: scheme.surfaceBorder,
-                          },
-                        ]}
-                      />
-                    ))}
-                  </View>
+                  <Text style={[styles.traitChipValue, { color: scheme.primary }]}>{t.value}</Text>
                   <TouchableOpacity
                     onPress={() => setTraits((prev) => prev.filter((x) => x.id !== t.id))}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -276,51 +262,37 @@ export default function NewGameScreen() {
                     { backgroundColor: scheme.primaryMuted, borderColor: scheme.surfaceBorder },
                   ]}
                 >
-                  <TextInput
-                    value={newTraitName}
-                    onChangeText={setNewTraitName}
-                    placeholder="Trait name"
-                    placeholderTextColor={scheme.textMuted}
-                    style={[
-                      styles.addTraitInput,
-                      { color: scheme.text, borderColor: scheme.surfaceBorder },
-                    ]}
-                    autoFocus
-                    selectionColor={scheme.primary}
-                  />
-                  <View style={styles.levelRow}>
-                    {[1, 2, 3, 4, 5, 6].map((l) => (
-                      <TouchableOpacity
-                        key={l}
-                        onPress={() => setNewTraitLevel(l)}
-                        style={[
-                          styles.levelBtn,
-                          {
-                            backgroundColor:
-                              newTraitLevel >= l
-                                ? scheme.levelColors[newTraitLevel - 1]
-                                : scheme.surface,
-                            borderColor:
-                              newTraitLevel >= l ? scheme.primary : scheme.surfaceBorder,
-                          },
-                        ]}
-                      >
-                        <Text
-                          style={{
-                            color: newTraitLevel >= l ? scheme.text : scheme.textMuted,
-                            fontSize: 13,
-                            fontWeight: '700',
-                          }}
-                        >
-                          {l}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
+                  <View style={styles.addTraitInputRow}>
+                    <TextInput
+                      value={newTraitName}
+                      onChangeText={setNewTraitName}
+                      placeholder="Trait name"
+                      placeholderTextColor={scheme.textMuted}
+                      style={[
+                        styles.addTraitNameInput,
+                        { color: scheme.text, borderColor: scheme.surfaceBorder },
+                      ]}
+                      autoFocus
+                      selectionColor={scheme.primary}
+                    />
+                    <TextInput
+                      value={newTraitValue}
+                      onChangeText={(v) => { if (v === '' || /^-?\d*$/.test(v)) setNewTraitValue(v); }}
+                      placeholder="0"
+                      placeholderTextColor={scheme.textMuted}
+                      keyboardType="number-pad"
+                      style={[
+                        styles.addTraitValueInput,
+                        { color: scheme.primary, borderColor: scheme.surfaceBorder },
+                      ]}
+                      selectionColor={scheme.primary}
+                      selectTextOnFocus
+                    />
                   </View>
                   <View style={styles.addTraitActions}>
                     <GlassButton
                       label="Cancel"
-                      onPress={() => { setAddingTrait(false); setNewTraitName(''); }}
+                      onPress={() => { setAddingTrait(false); setNewTraitName(''); setNewTraitValue('0'); }}
                       scheme={scheme}
                       variant="ghost"
                       small
@@ -517,15 +489,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-  traitChipPips: {
-    flexDirection: 'row',
-    gap: 4,
-  },
-  pip: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    borderWidth: 1,
+  traitChipValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    minWidth: 24,
+    textAlign: 'right',
   },
   addTraitForm: {
     borderWidth: 1,
@@ -534,23 +502,25 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     gap: 10,
   },
-  addTraitInput: {
+  addTraitInputRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  addTraitNameInput: {
+    flex: 1,
     borderWidth: 1,
     borderRadius: 8,
     padding: 10,
     fontSize: 14,
   },
-  levelRow: {
-    flexDirection: 'row',
-    gap: 6,
-  },
-  levelBtn: {
-    flex: 1,
-    aspectRatio: 1,
-    borderRadius: 7,
+  addTraitValueInput: {
+    width: 60,
     borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 14,
+    fontWeight: '700',
+    textAlign: 'center',
   },
   addTraitActions: {
     flexDirection: 'row',
