@@ -42,9 +42,9 @@ function ExpandableTextRow({
 
   const arrowColor = accentColor ?? scheme.primary;
 
-  const handleSave = () => {
-    if (!editName.trim()) return;
-    onUpdate(editName.trim(), editContent.trim());
+  const handleSave = (updatedName: string, updatedContent: string) => {
+    if (!updatedName.trim()) return;
+    onUpdate(updatedName.trim(), updatedContent.trim());
     setEditing(false);
   };
 
