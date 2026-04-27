@@ -1,11 +1,7 @@
 // ─── Color Schemes ──────────────────────────────────────────────────────────
 export type ColorSchemeId =
-  | 'midnight'
-  | 'forest'
-  | 'ember'
-  | 'arctic'
-  | 'amethyst'
   | 'obsidian'
+  | 'obsidianLight'
   | 'ancientTanDark'
   | 'ancientTanLight'
   | 'peacefulPinkDark'

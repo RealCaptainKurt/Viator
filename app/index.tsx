@@ -53,7 +53,7 @@ export default function MainScreen() {
   // Color scheme: prefer character's, then campaign's, then default
   const schemeId =
     activeChar?.colorScheme ?? activeCamp?.colorScheme ?? DEFAULT_SCHEME;
-  const scheme = COLOR_SCHEMES[schemeId];
+  const scheme = COLOR_SCHEMES[schemeId] ?? COLOR_SCHEMES[DEFAULT_SCHEME];
   const defaultScheme = COLOR_SCHEMES[DEFAULT_SCHEME];
 
   // Track whether a modal is open via a ref so the PanResponder

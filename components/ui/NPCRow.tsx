@@ -38,7 +38,7 @@ function NPCRow({
   return (
     <>
       {/* NPC card */}
-      <View style={[styles.npcContainer, { borderColor: scheme.surfaceBorder }]}>
+      <View style={[styles.npcContainer, { borderColor: scheme.surfaceBorder, backgroundColor: scheme.surface }]}>
         <TouchableOpacity
           onPress={() => setExpanded((v) => !v)}
           onLongPress={() => setEditing(true)}

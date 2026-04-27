@@ -15,6 +15,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLOR_SCHEMES, DEFAULT_SCHEME } from "../constants/colorSchemes";
+import { useAppStore } from "../store/appStore";
+import GlassCard from "../components/ui/GlassCard";
 
 if (Platform.OS === "android") {
   UIManager.setLayoutAnimationEnabledExperimental?.(true);
@@ -273,7 +275,7 @@ function SubEntry({
   };
 
   return (
-    <View style={[styles.subEntry, { borderColor: scheme.surfaceBorder }]}>
+    <GlassCard scheme={scheme} noPadding style={styles.subEntryCard}>
       <TouchableOpacity
         onPress={handleToggle}
         activeOpacity={0.7}
@@ -302,7 +304,7 @@ function SubEntry({
           )}
         </View>
       )}
-    </View>
+    </GlassCard>
   );
 }
 
@@ -331,7 +333,7 @@ function RulesEntry({
   const content = section.content ?? "";
 
   return (
-    <View style={[styles.entry, { borderColor: scheme.surfaceBorder }]}>
+    <GlassCard scheme={scheme} noPadding style={styles.entryCard}>
       <TouchableOpacity
         onPress={handleToggle}
         activeOpacity={0.7}
@@ -349,7 +351,6 @@ function RulesEntry({
         <View
           style={[styles.entryBody, { borderTopColor: scheme.surfaceBorder }]}
         >
-          {/* ── Plain paragraphs (shown above subsections if both present) ── */}
           {content.trim() ? (
             <RichText text={content} scheme={scheme} />
           ) : !section.subsections ? (
@@ -358,7 +359,6 @@ function RulesEntry({
             </Text>
           ) : null}
 
-          {/* ── Nested sub-entries ──────────────────────────────────────── */}
           {section.subsections && (
             <View style={content.trim() ? styles.subsectionsGap : undefined}>
               {section.subsections.map((sub, i) => (
@@ -374,14 +374,22 @@ function RulesEntry({
           )}
         </View>
       )}
-    </View>
+    </GlassCard>
   );
 }
 
 // ─── Screen ──────────────────────────────────────────────────────────────────
 
 export default function RulesReferenceScreen() {
-  const scheme = COLOR_SCHEMES[DEFAULT_SCHEME];
+  const { characters, campaigns, activeCharacterId, activeCampaignId } = useAppStore();
+  const activeChar = activeCharacterId ? characters[activeCharacterId] : null;
+  const activeCamp = activeCampaignId
+    ? campaigns[activeCampaignId]
+    : activeChar?.campaignId
+    ? campaigns[activeChar.campaignId]
+    : null;
+  const schemeId = activeChar?.colorScheme ?? activeCamp?.colorScheme ?? DEFAULT_SCHEME;
+  const scheme = COLOR_SCHEMES[schemeId] ?? COLOR_SCHEMES[DEFAULT_SCHEME];
 
   const [activeTab, setActiveTab] = useState<Tab>("solo");
   // Track which entries are expanded; keyed by "tab-index"
@@ -552,11 +560,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 4,
   },
-  entry: {
-    borderWidth: 1,
-    borderRadius: 12,
+  entryCard: {
     marginBottom: 8,
-    overflow: "hidden",
+    borderRadius: 12,
   },
   entryHeader: {
     flexDirection: "row",
@@ -593,11 +599,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontStyle: "italic",
   },
-  subEntry: {
-    borderWidth: 1,
-    borderRadius: 10,
+  subEntryCard: {
     marginBottom: 6,
-    overflow: "hidden",
+    borderRadius: 10,
   },
   subEntryHeader: {
     flexDirection: "row",

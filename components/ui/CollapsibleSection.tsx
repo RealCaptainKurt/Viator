@@ -66,6 +66,7 @@ export default function CollapsibleSection({
               borderColor: scheme.surfaceBorder,
               borderRadius: 10,
               padding: 8,
+              backgroundColor: scheme.surface,
             },
           ]}
         >

@@ -33,7 +33,7 @@ function NumberListItemRow({
     <>
       <View style={styles.row}>
         {/* Name pill — takes remaining space */}
-        <View style={[styles.namePill, { borderColor: scheme.surfaceBorder }]}>
+        <View style={[styles.namePill, { borderColor: scheme.surfaceBorder, backgroundColor: scheme.surface }]}>
           <Text style={[styles.name, { color: scheme.textSecondary }]} numberOfLines={1}>
             {item.name}
           </Text>

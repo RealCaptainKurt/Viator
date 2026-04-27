@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 10,
     padding: 10,
-    fontSize: 14,
+    fontSize: 16,
     marginBottom: 10,
   },
   descInput: {

@@ -102,7 +102,6 @@ const CharacterNameHeader = memo(function CharacterNameHeader({
           selectionColor={scheme.primary}
         />
         <TouchableOpacity onPress={openXpModal} style={styles.xpBox} activeOpacity={0.7}>
-          <Text style={[styles.xpLabel, { color: scheme.textSecondary }]}>XP</Text>
           <View style={[styles.xpDisplay, { borderColor: scheme.surfaceBorder }]}>
             <Text style={[styles.xpValue, { color: scheme.primary }]}>{xp}</Text>
           </View>
