@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useAppStore } from '../../store/appStore';
-import { COLOR_SCHEMES, ColorScheme } from '../../constants/colorSchemes';
+import { COLOR_SCHEMES, ColorScheme, DEFAULT_SCHEME } from '../../constants/colorSchemes';
 import { Character, Campaign } from '../../types';
 
 const SIDEBAR_WIDTH = Math.min(Dimensions.get('window').width * 0.78, 320);
@@ -159,7 +159,7 @@ export default function Sidebar({
               <>
                 <Text style={[styles.sectionLabel, { color: scheme.textMuted }]}>Characters & Campaigns</Text>
                 {pairedEntries.map(({ char, camp }) => {
-                  const cs = COLOR_SCHEMES[char.colorScheme];
+                  const cs = COLOR_SCHEMES[char.colorScheme] ?? COLOR_SCHEMES[DEFAULT_SCHEME];
                   const isActive =
                     activeCharacterId === char.id && activeCampaignId === camp.id;
                   return (
@@ -186,7 +186,7 @@ export default function Sidebar({
               <>
                 <Text style={[styles.sectionLabel, { color: scheme.textMuted }]}>Characters</Text>
                 {standaloneChars.map((char) => {
-                  const cs = COLOR_SCHEMES[char.colorScheme];
+                  const cs = COLOR_SCHEMES[char.colorScheme] ?? COLOR_SCHEMES[DEFAULT_SCHEME];
                   const isActive = activeCharacterId === char.id;
                   return (
                     <TouchableOpacity
@@ -212,7 +212,7 @@ export default function Sidebar({
               <>
                 <Text style={[styles.sectionLabel, { color: scheme.textMuted }]}>Campaigns</Text>
                 {standaloneCamps.map((camp) => {
-                  const cs = COLOR_SCHEMES[camp.colorScheme];
+                  const cs = COLOR_SCHEMES[camp.colorScheme] ?? COLOR_SCHEMES[DEFAULT_SCHEME];
                   const isActive = activeCampaignId === camp.id;
                   return (
                     <TouchableOpacity

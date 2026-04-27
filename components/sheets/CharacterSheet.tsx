@@ -585,7 +585,7 @@ export default function CharacterSheet({ characterId }: Props) {
   const isEditMode = useAppStore((s) => s.isEditMode);
   const addCharacterComponent = useAppStore((s) => s.addCharacterComponent);
 
-  const scheme = COLOR_SCHEMES[colorScheme];
+  const scheme = COLOR_SCHEMES[colorScheme] ?? COLOR_SCHEMES[DEFAULT_SCHEME];
   const total = sectionOrder.length;
 
   const [addingComp, setAddingComp] = useState(false);

@@ -87,7 +87,7 @@ export default function MainScreen() {
   const campaignIsLinked = !!(activeChar && activeCamp);
   // When linked, campaign inherits character's color scheme
   const campaignSchemeOverride =
-    campaignIsLinked ? COLOR_SCHEMES[activeChar!.colorScheme] : undefined;
+    campaignIsLinked ? (COLOR_SCHEMES[activeChar!.colorScheme] ?? COLOR_SCHEMES[DEFAULT_SCHEME]) : undefined;
 
   return (
     <View style={styles.container} {...panResponder.panHandlers}>

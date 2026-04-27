@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import { COLOR_SCHEMES, ColorScheme } from '../../constants/colorSchemes';
+import { COLOR_SCHEMES, ColorScheme, DEFAULT_SCHEME } from '../../constants/colorSchemes';
 import { ColorSchemeId } from '../../types';
 
 interface Props {
@@ -35,7 +35,7 @@ export default function ColorSchemePicker({ current, onChange, scheme }: Props) 
         ))}
       </ScrollView>
       <Text style={[styles.schemeName, { color: scheme.textSecondary }]}>
-        {COLOR_SCHEMES[current].label}
+        {(COLOR_SCHEMES[current] ?? COLOR_SCHEMES[DEFAULT_SCHEME]).label}
       </Text>
     </View>
   );

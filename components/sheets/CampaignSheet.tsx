@@ -608,7 +608,7 @@ export default function CampaignSheet({ campaignId, isStandalone, schemeOverride
   const isEditMode = useAppStore((s) => s.isEditMode);
   const addCampaignComponent = useAppStore((s) => s.addCampaignComponent);
 
-  const scheme = schemeOverride ?? COLOR_SCHEMES[colorScheme];
+  const scheme = schemeOverride ?? COLOR_SCHEMES[colorScheme] ?? COLOR_SCHEMES[DEFAULT_SCHEME];
   const total = sectionOrder.length;
 
   const [addingComp, setAddingComp] = useState(false);
