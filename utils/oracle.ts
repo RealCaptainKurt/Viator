@@ -691,6 +691,20 @@ const POWER_TYPES = [
   "Timely",
   "Gravitational",
   "Mimicking",
+  "Rusting",
+  "Petrifying",
+  "Phasing",
+  "Mirroring",
+  "Withering",
+  "Hungry",
+  "Smoldering",
+  "Dreaming",
+  "Cursed",
+  "Blooming",
+  "Shifting",
+  "Sticky",
+  "Weeping",
+  "Hollow",
 ];
 
 const ITEM_MELEE = [
@@ -786,11 +800,9 @@ const ITEM_TABLES = [
 // ── Power & Item internal helpers ─────────────────────────────────────────────
 
 function _rollPowerWords(): string {
-  const count = Math.floor(Math.random() * 9) + 1;
-  const numWords = count <= 6 ? 1 : count <= 8 ? 2 : 3;
   const picked: string[] = [];
-  while (picked.length < numWords) {
-    const word = POWER_TYPES[Math.floor(Math.random() * 36)];
+  while (picked.length < 2) {
+    const word = POWER_TYPES[Math.floor(Math.random() * POWER_TYPES.length)];
     if (!picked.includes(word)) picked.push(word);
   }
   return picked.join(" ");
@@ -803,7 +815,7 @@ function _rollItemName(): string {
 
 // ── Exported power & item functions ──────────────────────────────────────────
 
-/** Tower of Echoes — roll 1–3 power words (d6 count: 1–3 = one, 4–5 = two, 6 = three). */
+/** Tower of Echoes — roll exactly two different power words. */
 export function rollMagicPower(): string {
   return `Magic / Power: ${_rollPowerWords()}`;
 }
