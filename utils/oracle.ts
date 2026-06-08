@@ -697,7 +697,6 @@ const POWER_TYPES = [
   "Mirroring",
   "Withering",
   "Hungry",
-  "Smoldering",
   "Dreaming",
   "Cursed",
   "Blooming",
