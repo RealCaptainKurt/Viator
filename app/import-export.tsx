@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLOR_SCHEMES, DEFAULT_SCHEME } from '../constants/colorSchemes';
 import { Character, Campaign } from '../types';
 import { useAppStore } from '../store/appStore';
+import { buildPlaintext } from '../utils/plaintextExport';
 import GlassButton from '../components/ui/GlassButton';
 
 // Lazy-import native-only modules so web bundle doesn't break
@@ -149,21 +150,17 @@ export default function ImportExportScreen() {
 
   // ── Export ───────────────────────────────────────────────────────────────────
 
-  const handleExport = async () => {
-    const selChars = charList.filter((c) => selectedIds.has(c.id));
-    const selCamps = campList.filter((c) => selectedIds.has(c.id));
+  const selectedItems = () => ({
+    selChars: charList.filter((c) => selectedIds.has(c.id)),
+    selCamps: campList.filter((c) => selectedIds.has(c.id)),
+  });
 
-    // Also include campaigns linked to selected characters (and vice-versa) so
-    // paired entries stay coherent — but only if those linked items aren't
-    // independently deselected by the user. We export exactly what they picked.
-    const payload = buildPayload(selChars, selCamps);
-    const fileName = `viator-export-${Date.now()}.json`;
-
+  const runExport = async (content: string, fileName: string, mimeType: string) => {
     try {
       if (Platform.OS === 'web') {
-        downloadWeb(payload, fileName);
+        downloadWeb(content, fileName, mimeType);
       } else {
-        await exportNative(payload, fileName);
+        await exportNative(content, fileName, mimeType);
       }
       showFeedback('Exported successfully.', true);
     } catch {
@@ -171,8 +168,21 @@ export default function ImportExportScreen() {
     }
   };
 
-  const downloadWeb = (content: string, fileName: string) => {
-    const blob = new Blob([content], { type: 'application/json' });
+  const handleExportJson = async () => {
+    const { selChars, selCamps } = selectedItems();
+    // We export exactly what the user picked.
+    const payload = buildPayload(selChars, selCamps);
+    await runExport(payload, `viator-export-${Date.now()}.json`, 'application/json');
+  };
+
+  const handleExportPlaintext = async () => {
+    const { selChars, selCamps } = selectedItems();
+    const payload = buildPlaintext(selChars, selCamps);
+    await runExport(payload, `viator-export-${Date.now()}.txt`, 'text/plain');
+  };
+
+  const downloadWeb = (content: string, fileName: string, mimeType: string) => {
+    const blob = new Blob([content], { type: mimeType });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -181,13 +191,13 @@ export default function ImportExportScreen() {
     URL.revokeObjectURL(url);
   };
 
-  const exportNative = async (content: string, fileName: string) => {
+  const exportNative = async (content: string, fileName: string, mimeType: string) => {
     if (!FileSystem || !Sharing) return;
     const uri = FileSystem.cacheDirectory + fileName;
     await FileSystem.writeAsStringAsync(uri, content, {
       encoding: FileSystem.EncodingType.UTF8,
     });
-    await Sharing.shareAsync(uri, { mimeType: 'application/json', dialogTitle: 'Export Viator Data' });
+    await Sharing.shareAsync(uri, { mimeType, dialogTitle: 'Export Viator Data' });
   };
 
   // ── Render ───────────────────────────────────────────────────────────────────
@@ -323,15 +333,27 @@ export default function ImportExportScreen() {
 
           <View style={{ height: 32 }} />
 
-          {/* ── Export button ────────────────────────────────────────── */}
+          {/* ── Export buttons ───────────────────────────────────────── */}
           {hasItems && (
-            <GlassButton
-              label={selectedCount > 0 ? `Export Selected (${selectedCount})` : 'Export Selected'}
-              variant="primary"
-              scheme={scheme}
-              onPress={handleExport}
-              disabled={selectedCount === 0}
-            />
+            <View style={styles.exportButtons}>
+              <GlassButton
+                label={selectedCount > 0 ? `Export as JSON (${selectedCount})` : 'Export as JSON'}
+                variant="primary"
+                scheme={scheme}
+                onPress={handleExportJson}
+                disabled={selectedCount === 0}
+              />
+              <GlassButton
+                label={selectedCount > 0 ? `Export as Plaintext (${selectedCount})` : 'Export as Plaintext'}
+                variant="secondary"
+                scheme={scheme}
+                onPress={handleExportPlaintext}
+                disabled={selectedCount === 0}
+              />
+              <Text style={[styles.exportHint, { color: scheme.textMuted }]}>
+                JSON can be re-imported. Plaintext is a readable list of your content.
+              </Text>
+            </View>
           )}
 
           <View style={{ height: 40 }} />
@@ -444,5 +466,14 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 0.5,
+  },
+  exportButtons: {
+    gap: 10,
+  },
+  exportHint: {
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 4,
+    lineHeight: 16,
   },
 });
