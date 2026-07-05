@@ -177,8 +177,11 @@ export default function ImportExportScreen() {
 
   const handleExportPlaintext = async () => {
     const { selChars, selCamps } = selectedItems();
-    const payload = buildPlaintext(selChars, selCamps);
-    await runExport(payload, `viator-export-${Date.now()}.txt`, 'text/plain');
+    // Prepend a UTF-8 BOM so text editors (notably Windows Notepad) detect the
+    // encoding correctly. Without it, curly apostrophes/dashes and accented
+    // characters render as mojibake — e.g. "they're" shows up as "theyâ€™re".
+    const payload = '\uFEFF' + buildPlaintext(selChars, selCamps);
+    await runExport(payload, `viator-export-${Date.now()}.txt`, 'text/plain;charset=utf-8');
   };
 
   const downloadWeb = (content: string, fileName: string, mimeType: string) => {
@@ -217,7 +220,7 @@ export default function ImportExportScreen() {
         {/* ── Header ──────────────────────────────────────────────────── */}
         <View style={styles.header}>
           <TouchableOpacity
-            onPress={() => router.dismiss()}
+            onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             style={styles.headerBtn}
           >
