@@ -572,83 +572,86 @@ export function rollPlotHook(): string {
 }
 
 // ── GM Guide — One-Shot World Generator tables ────────────────────────────────
+// Three paired d6 rolls compose a setting: the Base (tone + age), the
+// Strangeness (a subject and how it manifests), and the Lands (environment +
+// scope). Options are phrased so they read as plain English in the sentence.
 
-const WORLD_SETTING_1 = [
-  "high",
-  "surreal",
-  "dark",
-  "post-apocalyptic",
-  "mythological",
-  "alternate",
+// The Base — the overall tone of the setting…
+const WORLD_BASE_TONE = [
+  "heroic/mythic",
+  "grimdark/gothic",
+  "pulpy/dramatic",
+  "cozy/campy",
+  "surreal/weird",
+  "horror/thriller",
 ];
-const WORLD_SETTING_2 = [
-  "fantasy",
-  "space opera",
-  "historic",
-  "modern",
-  "futuristic",
-  "steampunk",
-];
-
-// Each biome is a vivid landscape phrase completing "set in ___"
-const WORLD_BIOME = [
-  "wide, sun-drenched plains",
-  "the shadow of harsh, towering peaks",
-  "a world of restless seas and scattered shores",
-  "a frozen, wind-battered tundra",
-  "a vast, merciless desert",
-  "the depths of a dense, dripping jungle",
+// …and the age it's set in.
+const WORLD_BASE_AGE = [
+  "Ancient Age",
+  "Middle Age",
+  "Industrial Age",
+  "Modern Age",
+  "Future Age",
+  "Space Age",
 ];
 
-// d6 index 0-5 maps to table rolls 1-6; rolls 2 and 3 both = Humans
-const WORLD_RACES = [
-  "creatures unlike any human",
-  "humans",
-  "humans",
-  "humans alongside one other dominant race",
-  "humans alongside several other races",
-  "a melting pot of countless races and peoples",
+// The Strangeness — a subject that adds a wrinkle to the Base…
+const WORLD_STRANGE_SUBJECT = [
+  "gods/deities",
+  "machines/golems",
+  "monsters/behemoths",
+  "ancient tech/relics",
+  "spirits/ghosts",
+  "magic/anomalies",
+];
+// …and how it manifests (each reads after the plural subject).
+const WORLD_STRANGE_STATE = [
+  "are a protected secret",
+  "are an active threat",
+  "are the stuff of legends",
+  "are part of daily life",
+  "are a resource to be used",
+  "are worshipped by many",
 ];
 
-// Each phrase completes the sentence "…and [phrase] them."
-const WORLD_GODS = [
-  "no gods look over",
-  "the echoes of ancient, long-dead gods still haunt",
-  "dark gods conspire against",
-  "a pantheon of gods watches over",
-  "nature spirits wander alongside",
-  "a single god watches over",
+// The Lands — the environment…
+const WORLD_LAND_ENV = [
+  "temperate/plain",
+  "coastal/oceanic",
+  "arid/dry",
+  "frigid/barren",
+  "rugged/mountainous",
+  "fantastical/exotic",
 ];
-
-const WORLD_POWER_1 = [
-  "Elemental magic",
-  "Arcane magic",
-  "Psionics",
-  "Technology",
-  "Superpowers",
-  "Nature magic",
-];
-const WORLD_POWER_2 = [
-  "studied or trained",
-  "commonplace",
-  "channeled through tools",
-  "forbidden",
-  "attached to the body",
-  "bestowed or borrowed",
+// …and the size and scope of the setting.
+const WORLD_LAND_SCOPE = [
+  "lone city",
+  "scattered network",
+  "unmapped frontier",
+  "Great Nation",
+  "vast continent",
+  "sealed enclave",
 ];
 
 // ── Exported world function ───────────────────────────────────────────────────
 
-/** GM Guide One-Shot World Generator — setting, biome, races, gods, power system. */
+/**
+ * GM Guide One-Shot World Generator — rolls the Base (tone + age), the
+ * Strangeness (subject + how it manifests), and the Lands (environment +
+ * scope), then composes them into a single plain-English setting sentence.
+ */
 export function rollWorld(): string {
-  const setting1 = WORLD_SETTING_1[d6() - 1];
-  const setting2 = WORLD_SETTING_2[d6() - 1];
-  const biome = WORLD_BIOME[d6() - 1];
-  const races = WORLD_RACES[d6() - 1];
-  const gods = WORLD_GODS[d6() - 1];
-  const power1 = WORLD_POWER_1[d6() - 1];
-  const power2 = WORLD_POWER_2[d6() - 1];
-  return `World: A ${setting1} ${setting2} world set in ${biome}. The world is populated by ${races}, and ${gods} them. In this world, ${power1} is ${power2}.`;
+  const tone = WORLD_BASE_TONE[d6() - 1];
+  const age = WORLD_BASE_AGE[d6() - 1];
+  const subject = WORLD_STRANGE_SUBJECT[d6() - 1];
+  const state = WORLD_STRANGE_STATE[d6() - 1];
+  const env = WORLD_LAND_ENV[d6() - 1];
+  const scope = WORLD_LAND_SCOPE[d6() - 1];
+
+  const toneArticle = /^[aeiou]/i.test(tone) ? "An" : "A";
+  const envArticle = /^[aeiou]/i.test(env) ? "an" : "a";
+
+  return `World: ${toneArticle} ${tone} ${age} world set in ${envArticle} ${env} ${scope} where ${subject} ${state}.`;
 }
 
 // ── Tower of Echoes — Power & Item tables ─────────────────────────────────────
