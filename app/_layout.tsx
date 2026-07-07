@@ -9,7 +9,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     initialize();
-  }, []);
+  }, [initialize]);
 
   return (
     <GestureHandlerRootView style={styles.root}>

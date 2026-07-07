@@ -7,7 +7,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
-  Alert,
 } from 'react-native';
 import { router, Stack } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -23,8 +22,11 @@ let DocumentPicker: typeof import('expo-document-picker') | null = null;
 let FileSystem: typeof import('expo-file-system/legacy') | null = null;
 let Sharing: typeof import('expo-sharing') | null = null;
 if (Platform.OS !== 'web') {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   DocumentPicker = require('expo-document-picker');
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   FileSystem = require('expo-file-system/legacy');
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   Sharing = require('expo-sharing');
 }
 
@@ -114,7 +116,7 @@ export default function ImportExportScreen() {
         `Imported ${parsed.characters.length} character(s) and ${parsed.campaigns.length} campaign(s).`,
         true
       );
-    } catch (e) {
+    } catch {
       showFeedback('Failed to read file.', false);
     }
   };

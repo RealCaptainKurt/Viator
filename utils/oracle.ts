@@ -10,57 +10,57 @@ function _roll<T>(table: T[]): T {
 
 // d12 — verb phrases: what is happening or what to do
 const ACTION_FOCUS_TABLE = [
-  "Pursue or hunt down",
-  "Confront and challenge",
-  "Betray or undermine",
-  "Protect or defend",
-  "Uncover or expose",
-  "Create conflict between",
-  "Destroy or put an end to",
-  "Demand or seize",
-  "Escape or break free from",
-  "Change or reshape",
-  "Bargain or negotiate over",
-  "Unite or drive apart",
+  "pursue or hunt down",
+  "confront and challenge",
+  "betray or undermine",
+  "protect or defend",
+  "uncover or expose",
+  "create conflict between",
+  "destroy or put an end to",
+  "demand or seize",
+  "escape or break free from",
+  "change or reshape",
+  "bargain or negotiate over",
+  "unite or drive apart",
 ];
 
 // d10 — descriptive qualities that color something
 const DETAIL_FOCUS_TABLE = [
-  "Old and weathered",
-  "Surprisingly powerful",
-  "Well-hidden or concealed",
-  "Dangerous and volatile",
-  "Larger than expected",
-  "Deceptively insignificant",
-  "Ordinary on the surface",
-  "Unique or irreplaceable",
-  "Linked to the past",
-  "Not what it appears",
+  "old and weathered",
+  "surprisingly powerful",
+  "well-hidden or concealed",
+  "dangerous and volatile",
+  "larger than expected",
+  "deceptively insignificant",
+  "ordinary on the surface",
+  "unique or irreplaceable",
+  "linked to the past",
+  "not what it appears",
 ];
 
 // d12 — narrative subjects and themes
 const TOPIC_FOCUS_TABLE = [
-  "A trusted ally",
-  "A long-held secret",
-  "An unresolved conflict",
-  "Something of great value",
-  "A figure from the past",
-  "Someone's true intentions",
-  "A hidden threat",
-  "An unexpected opportunity",
-  "A debt or obligation",
-  "The cost of past choices",
-  "Someone who desperately needs help",
-  "A fragile or dangerous alliance",
+  "a trusted ally",
+  "a long-held secret",
+  "an unresolved conflict",
+  "something of great value",
+  "a figure from the past",
+  "someone's true intentions",
+  "a hidden threat",
+  "an unexpected opportunity",
+  "a debt or obligation",
+  "the cost of past choices",
+  "someone who desperately needs help",
+  "a fragile or dangerous alliance",
 ];
 
 const SCENE_COMPLICATIONS = [
-  "Hostile forces oppose you",
-  "An obstacle blocks your way",
-  "The stakes become suddenly higher",
-  "An NPC acts suddenly",
-  "All is not as it seems",
-  "Things actually go as planned",
+  "hostile forces oppose you",
+  "an obstacle blocks your way",
+  "the stakes become suddenly higher",
+  "an NPC acts suddenly",
+  "all is not as it seems",
+  "things actually go as planned",
 ];
 
 // d10
@@ -413,12 +413,12 @@ export function rollGroup(): string {
 // ── Town / City Builder tables ────────────────────────────────────────────────
 
 const TOWN_SIZE = [
-  "village (~1k people)",
-  "town (~10k people)",
-  "small city (~100k people)",
-  "city (~250k people)",
-  "metropolis (~1M people)",
-  "megacity (~10M+ people)",
+  "tiny village",
+  "small town",
+  "small city",
+  "respectably-sized city",
+  "large city",
+  "huge metropolis",
 ];
 
 const TOWN_RULER = [
@@ -484,9 +484,9 @@ export function rollTown(): string {
 
 // d12
 const NPC_IDENTITY_TABLE = [
-  "Outlaw", "Tradesman", "Commoner", "Soldier",
-  "Merchant", "Specialist", "Entertainer", "Adherent",
-  "Leader", "Mystic", "Adventurer", "Lord",
+  "outlaw", "tradesman", "commoner", "soldier",
+  "merchant", "specialist", "entertainer", "adherent",
+  "leader", "mystic", "adventurer", "lord",
 ];
 
 // d12 — phrased to read naturally after "wants to"
@@ -587,12 +587,12 @@ const WORLD_BASE_TONE = [
 ];
 // …and the age it's set in.
 const WORLD_BASE_AGE = [
-  "Ancient Age",
-  "Middle Age",
-  "Industrial Age",
-  "Modern Age",
-  "Future Age",
-  "Space Age",
+  "ancient age",
+  "middle age",
+  "industrial age",
+  "modern age",
+  "future age",
+  "space age",
 ];
 
 // The Strangeness — a subject that adds a wrinkle to the Base…
@@ -656,7 +656,6 @@ export function rollWorld(): string {
 
 // ── Tower of Echoes — Power & Item tables ─────────────────────────────────────
 
-// 2d6 source table flattened to d36. Replaced: Steadfast (51) → Shielding, Dominion (52) → Commanding.
 const POWER_TYPES = [
   "Blazing",
   "Icy",
@@ -707,6 +706,7 @@ const POWER_TYPES = [
   "Sticky",
   "Weeping",
   "Hollow",
+  "Bloody",
 ];
 
 const ITEM_MELEE = [

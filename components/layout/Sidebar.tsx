@@ -74,7 +74,7 @@ export default function Sidebar({
         }),
       ]).start();
     }
-  }, [visible]);
+  }, [visible, translateX, backdropOpacity]);
 
   // Recompute sorted lists whenever characters or campaigns data changes
   const { standaloneChars, standaloneCamps, pairedEntries } = useMemo(() => {
@@ -119,7 +119,6 @@ export default function Sidebar({
   const sidebarBg = scheme.background + 'd2'; // ~82% opacity
   const borderColor = scheme.surfaceBorder;
   const dividerColor = scheme.surfaceBorder;
-  const navIconColor = scheme.textSecondary;
   const hintColor = scheme.textMuted;
 
   return (

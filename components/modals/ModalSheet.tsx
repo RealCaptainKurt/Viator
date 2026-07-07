@@ -62,7 +62,7 @@ export default function ModalSheet({
         setShowModal(false);
       });
     }
-  }, [visible]);
+  }, [visible, backdropOpacity, sheetTranslateY, showModal]);
 
   // Phase 2: entrance animation after native views exist.
   useEffect(() => {
@@ -72,7 +72,7 @@ export default function ModalSheet({
         Animated.timing(sheetTranslateY, { toValue: 0, duration: SLIDE_DURATION, useNativeDriver: true }),
       ]).start();
     }
-  }, [showModal]);
+  }, [showModal, backdropOpacity, sheetTranslateY, visible]);
 
   if (!showModal) return null;
 
