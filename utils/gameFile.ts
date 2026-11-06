@@ -1,6 +1,7 @@
 import { COLOR_SCHEMES, DEFAULT_SCHEME } from '../constants/colorSchemes';
 import { createDefaultCampaign, createDefaultCharacter } from '../constants/nodeTemplates';
-import type { Campaign, Character, ColorSchemeId, AdditionalComponent, NPCItem } from '../types';
+import type { ColorSchemeId } from '../types';
+import type { AdditionalComponent, Campaign, Character, NPCItem } from '../types/legacy';
 import { GAME_SCHEMA_VERSION, type Game, type Node } from '../types/node';
 import { generateId } from './id';
 
@@ -118,8 +119,14 @@ function normalizeNode(raw: any, seen: Set<string>): Node {
 
 // ─── Legacy (pre-overhaul) export conversion ─────────────────────────────────
 function convertLegacyExport(data: any): Game[] {
-  const characters: Character[] = Array.isArray(data.characters) ? data.characters : [];
-  const campaigns: Campaign[] = Array.isArray(data.campaigns) ? data.campaigns : [];
+  return convertLegacyData(
+    Array.isArray(data.characters) ? data.characters : [],
+    Array.isArray(data.campaigns) ? data.campaigns : [],
+  );
+}
+
+/** Convert old characters/campaigns (from an export or old storage) into Games. */
+export function convertLegacyData(characters: Character[], campaigns: Campaign[]): Game[] {
   const campaignById = new Map(campaigns.map((c) => [c.id, c]));
   const used = new Set<string>();
   const games: any[] = [];

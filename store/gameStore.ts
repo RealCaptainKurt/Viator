@@ -41,6 +41,8 @@ interface GameStore {
   toggleCollapsed: (nodeId: string) => void;
 
   // ─── Files ─────────────────────────────────────────────────────────
+  /** Load saved games by id (flushes pending edits first). */
+  loadGames: (ids: string[]) => Promise<Game[]>;
   /** Serialize the given saved games (default: the open one). */
   exportGames: (ids?: string[]) => Promise<string>;
   /** Import a file's text. Returns the number of games added. Throws GameFileError. */
@@ -95,7 +97,10 @@ export const useGameStore = create<GameStore>((set, get) => {
 
     initialize: async () => {
       attachFlushListeners();
-      const [games, prefs] = await Promise.all([storage.loadIndex(), storage.loadPrefs()]);
+      await storage.loadIndex();
+      await storage.migrateLegacyStorage();
+      const games = storage.listGames();
+      const prefs = await storage.loadPrefs();
       const game = prefs.activeGameId ? await storage.loadGame(prefs.activeGameId) : null;
       set({ games, prefs: { ...prefs, activeGameId: game?.id ?? null }, game, isLoaded: true });
     },
@@ -178,11 +183,15 @@ export const useGameStore = create<GameStore>((set, get) => {
       setPrefs({ collapsed });
     },
 
-    exportGames: async (ids) => {
+    loadGames: async (ids) => {
       await storage.flushSaves();
+      const loaded = await Promise.all(ids.map(storage.loadGame));
+      return loaded.filter((g): g is Game => !!g);
+    },
+
+    exportGames: async (ids) => {
       const wanted = ids ?? (get().game ? [get().game!.id] : []);
-      const loaded = await Promise.all(wanted.map(storage.loadGame));
-      return serializeGames(loaded.filter((g): g is Game => !!g));
+      return serializeGames(await get().loadGames(wanted));
     },
 
     importGames: async (text) => {

@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { ColorSchemeId } from '../types';
 import type { Game } from '../types/node';
-import { normalizeGame } from './gameFile';
+import { convertLegacyData, normalizeGame } from './gameFile';
 
 /**
  * On-device persistence.
@@ -149,8 +149,19 @@ export function savePrefs(prefs: Prefs): Promise<void> {
   return writeJSON(KEYS.prefs, prefs);
 }
 
-// ─── Legacy cleanup ──────────────────────────────────────────────────────────
-/** Drop the pre-overhaul keys. Called once the new UI replaces the old one. */
-export function clearLegacyStorage(): Promise<void> {
-  return AsyncStorage.multiRemove(LEGACY_KEYS);
+// ─── Legacy migration ────────────────────────────────────────────────────────
+/**
+ * One-time import of pre-overhaul saves. Runs only while the new index is
+ * empty; the old keys are left in place (untouched) as a fallback.
+ */
+export async function migrateLegacyStorage(): Promise<number> {
+  if (indexCache.length) return 0;
+  const [chars, camps] = await Promise.all([readJSON(LEGACY_KEYS[0]), readJSON(LEGACY_KEYS[1])]);
+  const characters = chars && typeof chars === 'object' ? Object.values(chars as object) : [];
+  const campaigns = camps && typeof camps === 'object' ? Object.values(camps as object) : [];
+  if (!characters.length && !campaigns.length) return 0;
+  const games = convertLegacyData(characters, campaigns);
+  games.forEach(scheduleSave);
+  await flushSaves();
+  return games.length;
 }

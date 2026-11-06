@@ -1,360 +1,96 @@
-import React, { useRef, useEffect, useMemo } from 'react';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  Dimensions,
-  Animated,
-  TouchableWithoutFeedback,
-} from 'react-native';
 import { BlurView } from 'expo-blur';
-import { useAppStore } from '../../store/appStore';
-import { COLOR_SCHEMES, ColorScheme, DEFAULT_SCHEME } from '../../constants/colorSchemes';
-import { Character, Campaign } from '../../types';
+import { router, type Href } from 'expo-router';
+import React, { useEffect, useRef, useState } from 'react';
+import { Animated, Dimensions, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { DEFAULT_SCHEME } from '../../constants/colorSchemes';
+import { useScheme } from '../../hooks/useScheme';
+import { useGameStore } from '../../store/gameStore';
+import { useUIStore } from '../../store/uiStore';
+import ColorSchemeModal from '../modals/ColorSchemeModal';
 
 const SIDEBAR_WIDTH = Math.min(Dimensions.get('window').width * 0.78, 320);
-const SLIDE_DURATION = 230;
-const FADE_DURATION = 200;
 
-interface Props {
-  visible: boolean;
-  onClose: () => void;
-  onNewGame: () => void;
-  onRules: () => void;
-  onImportExport: () => void;
-  scheme: ColorScheme;
-}
+type IconName = keyof typeof MaterialCommunityIcons.glyphMap;
 
-export default function Sidebar({
-  visible,
-  onClose,
-  onNewGame,
-  onRules,
-  onImportExport,
-  scheme,
-}: Props) {
-  // Use individual selectors for fine-grained reactivity
-  const characters = useAppStore((s) => s.characters);
-  const campaigns = useAppStore((s) => s.campaigns);
-  const setActive = useAppStore((s) => s.setActive);
-  const activeCharacterId = useAppStore((s) => s.activeCharacterId);
-  const activeCampaignId = useAppStore((s) => s.activeCampaignId);
+/** Left-side menu for secondary pages. Main pages live in the bottom tab bar. */
+export default function Sidebar() {
+  const scheme = useScheme();
+  const insets = useSafeAreaInsets();
+  const visible = useUIStore((s) => s.isSidebarOpen);
+  const close = useUIStore((s) => s.closeSidebar);
+  const game = useGameStore((s) => s.game);
+  const setColorScheme = useGameStore((s) => s.setColorScheme);
+  const [showSchemes, setShowSchemes] = useState(false);
 
   const translateX = useRef(new Animated.Value(-SIDEBAR_WIDTH)).current;
-  const backdropOpacity = useRef(new Animated.Value(0)).current;
+  const backdrop = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    if (visible) {
-      Animated.parallel([
-        Animated.timing(translateX, {
-          toValue: 0,
-          duration: SLIDE_DURATION,
-          useNativeDriver: true,
-        }),
-        Animated.timing(backdropOpacity, {
-          toValue: 1,
-          duration: FADE_DURATION,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    } else {
-      Animated.parallel([
-        Animated.timing(translateX, {
-          toValue: -SIDEBAR_WIDTH,
-          duration: SLIDE_DURATION,
-          useNativeDriver: true,
-        }),
-        Animated.timing(backdropOpacity, {
-          toValue: 0,
-          duration: FADE_DURATION,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    }
-  }, [visible, translateX, backdropOpacity]);
+    Animated.parallel([
+      Animated.timing(translateX, { toValue: visible ? 0 : -SIDEBAR_WIDTH, duration: 230, useNativeDriver: true }),
+      Animated.timing(backdrop, { toValue: visible ? 1 : 0, duration: 200, useNativeDriver: true }),
+    ]).start();
+  }, [visible, translateX, backdrop]);
 
-  // Recompute sorted lists whenever characters or campaigns data changes
-  const { standaloneChars, standaloneCamps, pairedEntries } = useMemo(() => {
-    const charList = Object.values(characters)
-      .slice()
-      .sort((a, b) => b.updatedAt - a.updatedAt);
-    const campList = Object.values(campaigns)
-      .slice()
-      .sort((a, b) => b.updatedAt - a.updatedAt);
-
-    return {
-      standaloneChars: charList.filter((c) => !c.campaignId),
-      standaloneCamps: campList.filter((c) => !c.characterId),
-      pairedEntries: Object.values(characters)
-        .filter((c) => c.campaignId)
-        .map((c) => ({ char: c, camp: campaigns[c.campaignId!] }))
-        .filter((e): e is { char: Character; camp: Campaign } => !!e.camp)
-        .sort((a, b) => Math.max(b.char.updatedAt, b.camp.updatedAt) - Math.max(a.char.updatedAt, a.camp.updatedAt)),
-    };
-  }, [characters, campaigns]);
-
-  const handleSelectChar = (charId: string, campId: string | null = null) => {
-    setActive(charId, campId);
-    onClose();
+  const go = (href: Href) => {
+    close();
+    router.push(href);
   };
 
-  const handleSelectCamp = (campId: string) => {
-    setActive(null, campId);
-    onClose();
-  };
-
-  const renderDot = (active: boolean, color: string) => (
-    <View
-      style={[
-        styles.activeDot,
-        { backgroundColor: active ? color : 'transparent' },
-      ]}
-    />
-  );
-
-  // Derived colors for sidebar chrome
-  const sidebarBg = scheme.background + 'd2'; // ~82% opacity
-  const borderColor = scheme.surfaceBorder;
-  const dividerColor = scheme.surfaceBorder;
-  const hintColor = scheme.textMuted;
+  const items: { icon: IconName; label: string; onPress: () => void; hidden?: boolean }[] = [
+    { icon: 'palette-outline', label: 'Color Theme', onPress: () => setShowSchemes(true), hidden: !game },
+    { icon: 'swap-vertical', label: 'Import / Export', onPress: () => go('/import-export') },
+    { icon: 'book-open-variant', label: 'Rules Reference', onPress: () => go('/rules-reference') },
+  ];
 
   return (
-    <Animated.View
-      style={[styles.root, { opacity: backdropOpacity }]}
-      pointerEvents={visible ? 'auto' : 'none'}
-    >
-      {/* Backdrop tap-to-close */}
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={StyleSheet.absoluteFillObject} />
-      </TouchableWithoutFeedback>
-
-      {/* Sliding panel */}
-      <Animated.View
-        style={[styles.sidebar, { width: SIDEBAR_WIDTH, borderRightColor: borderColor, transform: [{ translateX }] }]}
-      >
-        <BlurView intensity={40} tint={scheme.blurTint} style={StyleSheet.absoluteFillObject} />
-        <View style={[styles.sidebarInner, { backgroundColor: sidebarBg }]}>
-          {/* App Name */}
-          <View style={styles.appHeader}>
+    <>
+      <Animated.View style={[styles.root, { opacity: backdrop }]} pointerEvents={visible ? 'auto' : 'none'}>
+        <TouchableWithoutFeedback onPress={close}>
+          <View style={StyleSheet.absoluteFillObject} />
+        </TouchableWithoutFeedback>
+        <Animated.View
+          style={[
+            styles.panel,
+            { width: SIDEBAR_WIDTH, borderRightColor: scheme.surfaceBorder, transform: [{ translateX }] },
+          ]}
+        >
+          <BlurView intensity={40} tint={scheme.blurTint} style={StyleSheet.absoluteFillObject} />
+          <View style={[styles.inner, { backgroundColor: scheme.background + 'd2', paddingTop: insets.top + 24 }]}>
             <Text style={[styles.appName, { color: scheme.text }]}>Viator</Text>
-            <Text style={[styles.appSubtitle, { color: scheme.textSecondary }]}>Character Builder</Text>
+            <Text style={[styles.appSubtitle, { color: scheme.textSecondary }]}>Character Builder & Solo Engine</Text>
+            <View style={[styles.divider, { backgroundColor: scheme.surfaceBorder }]} />
+            {items
+              .filter((i) => !i.hidden)
+              .map((i) => (
+                <TouchableOpacity key={i.label} onPress={i.onPress} style={styles.navItem} activeOpacity={0.7}>
+                  <MaterialCommunityIcons name={i.icon} size={18} color={scheme.textSecondary} />
+                  <Text style={[styles.navLabel, { color: scheme.text }]}>{i.label}</Text>
+                </TouchableOpacity>
+              ))}
           </View>
-
-          <View style={[styles.divider, { backgroundColor: dividerColor }]} />
-
-          {/* Nav Buttons */}
-          <NavItem icon={<MaterialCommunityIcons name="star-four-points" size={16} color={scheme.textSecondary} />} label="New Game" onPress={onNewGame} scheme={scheme} />
-          <NavItem icon={<MaterialCommunityIcons name="book-open-variant" size={16} color={scheme.textSecondary} />} label="Rules Reference" onPress={onRules} scheme={scheme} />
-          <NavItem icon={<MaterialCommunityIcons name="swap-vertical" size={16} color={scheme.textSecondary} />} label="Import / Export" onPress={onImportExport} scheme={scheme} />
-
-          <View style={[styles.divider, { backgroundColor: dividerColor }]} />
-
-          <ScrollView style={styles.entryList} showsVerticalScrollIndicator={false}>
-            {/* Paired */}
-            {pairedEntries.length > 0 && (
-              <>
-                <Text style={[styles.sectionLabel, { color: scheme.textMuted }]}>Characters & Campaigns</Text>
-                {pairedEntries.map(({ char, camp }) => {
-                  const cs = COLOR_SCHEMES[char.colorScheme] ?? COLOR_SCHEMES[DEFAULT_SCHEME];
-                  const isActive =
-                    activeCharacterId === char.id && activeCampaignId === camp.id;
-                  return (
-                    <TouchableOpacity
-                      key={char.id}
-                      onPress={() => handleSelectChar(char.id, camp.id)}
-                      style={[
-                        styles.entryItem,
-                        isActive && { backgroundColor: cs.primaryMuted },
-                      ]}
-                      activeOpacity={0.7}
-                    >
-                      {renderDot(isActive, cs.primary)}
-                      <Text style={[styles.entryName, { color: scheme.text, flex: 1 }]}>{char.name}</Text>
-                      <View style={[styles.colorDot, { backgroundColor: cs.primary }]} />
-                    </TouchableOpacity>
-                  );
-                })}
-              </>
-            )}
-
-            {/* Standalone Characters */}
-            {standaloneChars.length > 0 && (
-              <>
-                <Text style={[styles.sectionLabel, { color: scheme.textMuted }]}>Characters</Text>
-                {standaloneChars.map((char) => {
-                  const cs = COLOR_SCHEMES[char.colorScheme] ?? COLOR_SCHEMES[DEFAULT_SCHEME];
-                  const isActive = activeCharacterId === char.id;
-                  return (
-                    <TouchableOpacity
-                      key={char.id}
-                      onPress={() => handleSelectChar(char.id)}
-                      style={[
-                        styles.entryItem,
-                        isActive && { backgroundColor: cs.primaryMuted },
-                      ]}
-                      activeOpacity={0.7}
-                    >
-                      {renderDot(isActive, cs.primary)}
-                      <Text style={[styles.entryName, { color: scheme.text, flex: 1 }]}>{char.name}</Text>
-                      <View style={[styles.colorDot, { backgroundColor: cs.primary }]} />
-                    </TouchableOpacity>
-                  );
-                })}
-              </>
-            )}
-
-            {/* Standalone Campaigns */}
-            {standaloneCamps.length > 0 && (
-              <>
-                <Text style={[styles.sectionLabel, { color: scheme.textMuted }]}>Campaigns</Text>
-                {standaloneCamps.map((camp) => {
-                  const cs = COLOR_SCHEMES[camp.colorScheme] ?? COLOR_SCHEMES[DEFAULT_SCHEME];
-                  const isActive = activeCampaignId === camp.id;
-                  return (
-                    <TouchableOpacity
-                      key={camp.id}
-                      onPress={() => handleSelectCamp(camp.id)}
-                      style={[
-                        styles.entryItem,
-                        isActive && { backgroundColor: cs.primaryMuted },
-                      ]}
-                      activeOpacity={0.7}
-                    >
-                      {renderDot(isActive, cs.primary)}
-                      <Text style={[styles.entryName, { color: scheme.text, flex: 1 }]}>{camp.name}</Text>
-                      <View style={[styles.colorDot, { backgroundColor: cs.primary }]} />
-                    </TouchableOpacity>
-                  );
-                })}
-              </>
-            )}
-
-            {standaloneChars.length === 0 && standaloneCamps.length === 0 && pairedEntries.length === 0 && (
-              <Text style={[styles.emptyHint, { color: hintColor }]}>Tap New Game to get started.</Text>
-            )}
-
-            <View style={{ height: 40 }} />
-          </ScrollView>
-        </View>
+        </Animated.View>
       </Animated.View>
-    </Animated.View>
-  );
-}
-
-function NavItem({
-  icon,
-  label,
-  onPress,
-  scheme,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  onPress: () => void;
-  scheme: ColorScheme;
-}) {
-  return (
-    <TouchableOpacity onPress={onPress} style={styles.navItem} activeOpacity={0.7}>
-      <View style={styles.navIcon}>{icon}</View>
-      <Text style={[styles.navLabel, { color: scheme.text }]}>{label}</Text>
-    </TouchableOpacity>
+      <ColorSchemeModal
+        visible={showSchemes}
+        onClose={() => setShowSchemes(false)}
+        current={game?.colorScheme ?? DEFAULT_SCHEME}
+        onChange={setColorScheme}
+        scheme={scheme}
+      />
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    zIndex: 100,
-  },
-  sidebar: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    bottom: 0,
-    overflow: 'hidden',
-    borderRightWidth: 1,
-  },
-  sidebarInner: {
-    flex: 1,
-    paddingTop: 60,
-    paddingHorizontal: 20,
-  },
-  appHeader: {
-    marginBottom: 20,
-  },
-  appName: {
-    fontSize: 28,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  appSubtitle: {
-    fontSize: 13,
-    letterSpacing: 0.5,
-    marginTop: 2,
-  },
-  divider: {
-    height: 1,
-    marginVertical: 12,
-  },
-  navItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 11,
-    gap: 12,
-  },
-  navIcon: {
-    width: 22,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-  },
-  navLabel: {
-    fontSize: 15,
-    fontWeight: '500',
-  },
-  entryList: {
-    flex: 1,
-    marginTop: 4,
-  },
-  sectionLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    marginTop: 12,
-    marginBottom: 4,
-  },
-  entryItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    borderRadius: 10,
-    gap: 8,
-  },
-  activeDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  entryName: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  entrySub: {
-    fontSize: 11,
-    marginTop: 1,
-  },
-  colorDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  emptyHint: {
-    fontSize: 13,
-    fontStyle: 'italic',
-    marginTop: 12,
-  },
+  root: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.45)', zIndex: 100 },
+  panel: { position: 'absolute', top: 0, left: 0, bottom: 0, overflow: 'hidden', borderRightWidth: 1 },
+  inner: { flex: 1, paddingHorizontal: 20 },
+  appName: { fontSize: 28, fontWeight: '800', letterSpacing: 0.5 },
+  appSubtitle: { fontSize: 13, marginTop: 2 },
+  divider: { height: 1, marginVertical: 18 },
+  navItem: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },
+  navLabel: { fontSize: 16, fontWeight: '600' },
 });

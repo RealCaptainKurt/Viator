@@ -1,7 +1,5 @@
-import { BlurView } from 'expo-blur';
-import { Ionicons } from '@expo/vector-icons';
 import React, { useRef, useState } from 'react';
-import { Animated, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { ColorScheme } from '../../constants/colorSchemes';
 import {
   rollActionFocus,
@@ -26,15 +24,12 @@ import {
   rollWorld,
 } from '../../utils/oracle';
 import GlassButton from '../ui/GlassButton';
-import ModalSheet from './ModalSheet';
 
 interface Props {
-  visible: boolean;
-  onClose: () => void;
   scheme: ColorScheme;
 }
 
-export default function OracleModal({ visible, onClose, scheme }: Props) {
+export default function OraclePanel({ scheme }: Props) {
   const [results, setResults] = useState<string[]>([]);
   const [containerWidth, setContainerWidth] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
@@ -59,20 +54,7 @@ export default function OracleModal({ visible, onClose, scheme }: Props) {
   });
 
   return (
-    <ModalSheet visible={visible} onClose={onClose} scheme={scheme} height="85%">
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: scheme.text }]}>Oracle</Text>
-        <TouchableOpacity
-          onPress={onClose}
-          activeOpacity={0.7}
-          style={[styles.closeBtn, { borderColor: scheme.surfaceBorder }]}
-        >
-          <BlurView intensity={20} tint={scheme.blurTint} style={[StyleSheet.absoluteFillObject, { borderRadius: 28 }]} />
-          <View style={[StyleSheet.absoluteFillObject, { backgroundColor: scheme.surface, borderRadius: 28 }]} />
-          <Ionicons name="close" size={22} color={scheme.textSecondary} />
-        </TouchableOpacity>
-      </View>
+    <View style={styles.panel}>
 
       {/* Results box */}
       <View
@@ -169,36 +151,19 @@ export default function OracleModal({ visible, onClose, scheme }: Props) {
           </View>
         </Animated.View>
       </View>
-    </ModalSheet>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: '800',
-  },
-  closeBtn: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    borderWidth: 1,
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closeIcon: {
-    fontSize: 14,
-    fontWeight: '700',
+  panel: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
   },
   resultsBox: {
-    height: 150,
+    flex: 1,
+    minHeight: 140,
     borderRadius: 10,
     borderWidth: 1,
     marginBottom: 16,
