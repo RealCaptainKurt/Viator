@@ -1,5 +1,4 @@
 import React, { useRef, useState } from 'react';
-import { Ionicons } from '@expo/vector-icons';
 import {
   View,
   Text,
@@ -7,10 +6,8 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { ColorScheme } from '../../constants/colorSchemes';
 import GlassButton from '../ui/GlassButton';
-import ModalSheet from './ModalSheet';
 import { generateId } from '../../utils/id';
 
 interface DiceResult {
@@ -25,12 +22,10 @@ const DICE_ROW1 = [6, 20, 100];
 const DICE_ROW2 = [4, 8, 10, 12];
 
 interface Props {
-  visible: boolean;
-  onClose: () => void;
   scheme: ColorScheme;
 }
 
-export default function DiceModal({ visible, onClose, scheme }: Props) {
+export default function DicePanel({ scheme }: Props) {
   const [count, setCount] = useState(1);
   const [selectedDie, setSelectedDie] = useState(6);
   const [modifier, setModifier] = useState(0);
@@ -109,20 +104,7 @@ export default function DiceModal({ visible, onClose, scheme }: Props) {
   );
 
   return (
-    <ModalSheet visible={visible} onClose={onClose} scheme={scheme}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: scheme.text }]}>Dice Roller</Text>
-        <TouchableOpacity
-          onPress={onClose}
-          activeOpacity={0.7}
-          style={[styles.closeBtn, { borderColor: scheme.surfaceBorder }]}
-        >
-          <BlurView intensity={20} tint={scheme.blurTint} style={[StyleSheet.absoluteFillObject, { borderRadius: 28 }]} />
-          <View style={[StyleSheet.absoluteFillObject, { backgroundColor: scheme.surface, borderRadius: 28 }]} />
-          <Ionicons name="close" size={22} color={scheme.textSecondary} />
-        </TouchableOpacity>
-      </View>
+    <View style={styles.panel}>
 
       {/* Results box */}
       <View
@@ -223,36 +205,19 @@ export default function DiceModal({ visible, onClose, scheme }: Props) {
         variant="primary"
         style={{ marginTop: 8 }}
       />
-    </ModalSheet>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: '800',
-  },
-  closeBtn: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    borderWidth: 1,
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closeIcon: {
-    fontSize: 14,
-    fontWeight: '700',
+  panel: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
   },
   resultsBox: {
-    height: 130,
+    flex: 1,
+    minHeight: 140,
     borderRadius: 10,
     borderWidth: 1,
     marginBottom: 16,

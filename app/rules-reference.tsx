@@ -14,8 +14,8 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLOR_SCHEMES, DEFAULT_SCHEME } from "../constants/colorSchemes";
-import { useAppStore } from "../store/appStore";
+import { COLOR_SCHEMES } from "../constants/colorSchemes";
+import { useScheme } from "../hooks/useScheme";
 import GlassCard from "../components/ui/GlassCard";
 
 if (Platform.OS === "android") {
@@ -67,7 +67,7 @@ const SOLO_SECTIONS: RulesSection[] = [
     title: "The Oracle",
     content:
       "The Oracle is the tool that speaks for the world. Whenever you want to know something that your character can't simply decide, ask the Oracle a question, roll, and interpret the answer into the story. An answer is only ever a prompt: if a result doesn't fit the fiction, read it loosely or ask again." +
-      "\n\nOpen the Oracle with the dice button in the toolbar. Results are added to a running log, so you can look back at the last few answers as a scene plays out.",
+      "\n\nOpen the Oracle from the tab bar at the bottom of the screen. Results are added to a running log, so you can look back at the last few answers as a scene plays out.",
     subsections: [
       {
         title: "Yes / No Questions",
@@ -899,15 +899,7 @@ function RulesEntry({
 // ─── Screen ──────────────────────────────────────────────────────────────────
 
 export default function RulesReferenceScreen() {
-  const { characters, campaigns, activeCharacterId, activeCampaignId } = useAppStore();
-  const activeChar = activeCharacterId ? characters[activeCharacterId] : null;
-  const activeCamp = activeCampaignId
-    ? campaigns[activeCampaignId]
-    : activeChar?.campaignId
-    ? campaigns[activeChar.campaignId]
-    : null;
-  const schemeId = activeChar?.colorScheme ?? activeCamp?.colorScheme ?? DEFAULT_SCHEME;
-  const scheme = COLOR_SCHEMES[schemeId] ?? COLOR_SCHEMES[DEFAULT_SCHEME];
+  const scheme = useScheme();
 
   const [activeTab, setActiveTab] = useState<Tab>("solo");
   // Track which entries are expanded; keyed by "tab-index"
