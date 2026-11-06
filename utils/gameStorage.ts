@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { ColorSchemeId } from '../types';
+import { toAccent } from '../constants/colorSchemes';
+import type { AccentId, ThemeMode } from '../types';
 import type { Game } from '../types/node';
 import { convertLegacyData, normalizeGame } from './gameFile';
 
@@ -29,8 +30,7 @@ const SAVE_DELAY_MS = 400;
 export interface GameSummary {
   id: string;
   characterName: string;
-  campaignName: string;
-  colorScheme: ColorSchemeId;
+  accent: AccentId;
   updatedAt: number;
 }
 
@@ -38,16 +38,21 @@ export interface Prefs {
   activeGameId: string | null;
   /** Collapsed node IDs. UI state only. */
   collapsed: Record<string, true>;
+  /** Light/dark choice. null = follow the device setting until the user picks one. */
+  mode: ThemeMode | null;
+  /** Favorited game IDs: pinned to the top of the Characters list. Device-local. */
+  favorites: Record<string, true>;
+  /** Oracle sections the user has opened (true) or closed (false). Unset = the section's default. */
+  oracleOpen: Record<string, boolean>;
 }
 
-const DEFAULT_PREFS: Prefs = { activeGameId: null, collapsed: {} };
+const DEFAULT_PREFS: Prefs = { activeGameId: null, collapsed: {}, mode: null, favorites: {}, oracleOpen: {} };
 
 export function summarize(game: Game): GameSummary {
   return {
     id: game.id,
     characterName: game.character.name,
-    campaignName: game.campaign.name,
-    colorScheme: game.colorScheme,
+    accent: game.accent,
     updatedAt: game.updatedAt,
   };
 }
@@ -75,7 +80,17 @@ let indexCache: GameSummary[] = [];
 /** Load the game list. Call once at startup before any save. */
 export async function loadIndex(): Promise<GameSummary[]> {
   const raw = await readJSON(KEYS.index);
-  indexCache = Array.isArray(raw) ? (raw as GameSummary[]) : [];
+  // Entries written before accents existed carry `colorScheme` instead.
+  indexCache = Array.isArray(raw)
+    ? (raw as any[]).map(
+        (s): GameSummary => ({
+          id: s.id,
+          characterName: s.characterName ?? '',
+          accent: toAccent(s.accent ?? s.colorScheme),
+          updatedAt: s.updatedAt ?? 0,
+        }),
+      )
+    : [];
   return sortedIndex();
 }
 
@@ -142,7 +157,11 @@ export function listGames(): GameSummary[] {
 // ─── Prefs ───────────────────────────────────────────────────────────────────
 export async function loadPrefs(): Promise<Prefs> {
   const raw = (await readJSON(KEYS.prefs)) as Partial<Prefs> | null;
-  return { ...DEFAULT_PREFS, ...(raw ?? {}) };
+  const prefs = { ...DEFAULT_PREFS, ...(raw ?? {}) };
+  if (prefs.mode !== 'light' && prefs.mode !== 'dark') prefs.mode = null;
+  if (!prefs.favorites || typeof prefs.favorites !== 'object') prefs.favorites = {};
+  if (!prefs.oracleOpen || typeof prefs.oracleOpen !== 'object') prefs.oracleOpen = {};
+  return prefs;
 }
 
 export function savePrefs(prefs: Prefs): Promise<void> {

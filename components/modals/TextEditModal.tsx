@@ -66,7 +66,7 @@ export default function TextEditModal({
             {
               color: scheme.text,
               borderColor: scheme.surfaceBorder,
-              backgroundColor: scheme.primaryMuted,
+              backgroundColor: scheme.inputBackground,
             },
           ]}
           selectionColor={scheme.primary}
@@ -86,7 +86,7 @@ export default function TextEditModal({
           {
             color: scheme.text,
             borderColor: scheme.surfaceBorder,
-            backgroundColor: scheme.primaryMuted,
+            backgroundColor: scheme.inputBackground,
           },
         ]}
         selectionColor={scheme.primary}

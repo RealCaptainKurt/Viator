@@ -1,14 +1,13 @@
 {
   "version": 1,
   "id": "g1",
-  "colorScheme": "ancientTanLight",
+  "accent": "amber",
   "createdAt": 1762400000000,
   "updatedAt": 1762400000000,
   "character": {
     "id": "c1",
     "name": "Ilsa Thorne",
     "value": 14,
-    "valueLabel": "XP",
     "description": "A disgraced cartographer chasing the edge of the map.",
     "children": [
       {
@@ -27,7 +26,6 @@
           {
             "id": "c7",
             "name": "Traits",
-            "childValueLabel": "Level",
             "children": [
               { "id": "c8", "name": "Aerie Peak", "value": 3, "description": "Highest isle; home of the wind-priests." },
               { "id": "c9", "name": "The Drift", "value": 1, "description": "A slow-moving graveyard of wrecked skyships." }
@@ -41,7 +39,6 @@
                 "id": "c11",
                 "name": "Mara Vell",
                 "value": 12,
-                "valueLabel": "XP",
                 "description": "Sky-sailor and smuggler. Owes Ilsa a favor.",
                 "children": [
                   {
@@ -65,7 +62,7 @@
     "name": "The Edge of the Map",
     "children": [
       { "id": "k2", "name": "Current Scene", "description": "Docking at Aerie Peak in a storm." },
-      { "id": "k3", "name": "NPCs", "childValueLabel": "XP", "children": [] },
+      { "id": "k3", "name": "NPCs", "children": [] },
       { "id": "k4", "name": "Locations", "children": [] },
       { "id": "k5", "name": "Scenes", "children": [] }
     ]

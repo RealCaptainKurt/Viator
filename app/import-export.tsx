@@ -1,9 +1,10 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import PageScaffold from '../components/layout/PageScaffold';
+import PageScaffold, { FLOATING_INSET } from '../components/layout/PageScaffold';
 import GlassButton from '../components/ui/GlassButton';
-import { COLOR_SCHEMES, DEFAULT_SCHEME } from '../constants/colorSchemes';
+import { ACCENTS } from '../constants/colorSchemes';
+import { formatDate } from '../utils/date';
 import { useScheme } from '../hooks/useScheme';
 import { useGameStore } from '../store/gameStore';
 import { GameFileError, exportFileName, serializeGames } from '../utils/gameFile';
@@ -121,7 +122,7 @@ export default function ImportExportScreen() {
   const countSuffix = selectedCount > 0 ? ` (${selectedCount})` : '';
 
   return (
-    <PageScaffold title="Import / Export" leading="back" bottomInset>
+    <PageScaffold leading="back" bottomInset underlay>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         {feedback && (
           <View
@@ -155,7 +156,7 @@ export default function ImportExportScreen() {
           <Text style={[styles.emptyHint, { color: scheme.textMuted }]}>No games yet. Start one from the Characters page.</Text>
         )}
         {games.map((g) => {
-          const cs = COLOR_SCHEMES[g.colorScheme] ?? COLOR_SCHEMES[DEFAULT_SCHEME];
+          const accentColor = ACCENTS[g.accent][scheme.mode];
           const checked = selectedIds.has(g.id);
           return (
             <TouchableOpacity
@@ -169,13 +170,13 @@ export default function ImportExportScreen() {
                 size={22}
                 color={checked ? scheme.primary : scheme.textMuted}
               />
-              <View style={[styles.colorDot, { backgroundColor: cs.primary }]} />
+              <View style={[styles.colorDot, { backgroundColor: accentColor }]} />
               <View style={{ flex: 1 }}>
                 <Text style={[styles.itemName, { color: scheme.text }]} numberOfLines={1}>
                   {g.characterName || 'Untitled character'}
                 </Text>
                 <Text style={[styles.itemSub, { color: scheme.textSecondary }]} numberOfLines={1}>
-                  {g.campaignName || 'Untitled campaign'}
+                  {formatDate(g.updatedAt)}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -235,7 +236,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingTop: 4,
+    paddingTop: FLOATING_INSET,
   },
   feedbackBanner: {
     flexDirection: 'row',

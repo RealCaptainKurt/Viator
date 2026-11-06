@@ -60,6 +60,7 @@ export default function ModalOverlay({
               >
                 <GlassCard
                   scheme={scheme}
+                  solid
                   style={cardStyle ? [styles.card, { maxWidth }, cardStyle] : [styles.card, { maxWidth }]}
                 >
                   {title ? (

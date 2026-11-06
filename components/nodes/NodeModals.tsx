@@ -12,15 +12,13 @@ import ModalOverlay from '../modals/ModalOverlay';
 import NumberEditModal from '../modals/NumberEditModal';
 import TextEditModal from '../modals/TextEditModal';
 import GlassButton from '../ui/GlassButton';
+import NumberStepper from '../ui/NumberStepper';
 
-/** Look up a node (and its parent's child label) in the open game. Stable references only. */
-function useNodeAt(ref: NodeRef | null): { node: Node | null; inheritedLabel?: string; isRoot: boolean } {
+/** Look up a node in the open game. Stable references only. */
+function useNodeAt(ref: NodeRef | null): { node: Node | null; isRoot: boolean } {
   const node = useGameStore((s) => (ref && s.game ? findNode(s.game[ref.page], ref.nodeId)?.node ?? null : null));
-  const inheritedLabel = useGameStore((s) =>
-    ref && s.game ? findNode(s.game[ref.page], ref.nodeId)?.parent?.childValueLabel : undefined,
-  );
   const isRoot = useGameStore((s) => !!ref && !!s.game && s.game[ref.page].id === ref.nodeId);
-  return { node, inheritedLabel, isRoot };
+  return { node, isRoot };
 }
 
 /** Renders every node editor once for the whole app. */
@@ -40,12 +38,11 @@ function ValueModal() {
   const scheme = useScheme();
   const ref = useUIStore((s) => s.editingValue);
   const close = () => useUIStore.getState().set({ editingValue: null });
-  const { node, inheritedLabel } = useNodeAt(ref);
-  const label = node?.valueLabel ?? inheritedLabel;
+  const { node } = useNodeAt(ref);
   return (
     <NumberEditModal
       visible={!!node && node.value !== undefined}
-      title={`${node?.name || 'Untitled'}${label ? ` · ${label}` : ''}`}
+      title={node?.name || 'Untitled'}
       initialValue={node?.value ?? 0}
       allowNameEdit={false}
       scheme={scheme}
@@ -139,16 +136,14 @@ function NodeEditModal() {
   const scheme = useScheme();
   const ref = useUIStore((s) => s.editing);
   const close = () => useUIStore.getState().set({ editing: null });
-  const { node, inheritedLabel, isRoot } = useNodeAt(ref);
+  const { node, isRoot } = useNodeAt(ref);
 
   const [name, setName] = useState('');
   const [hasValue, setHasValue] = useState(false);
   const [value, setValue] = useState('0');
-  const [valueLabel, setValueLabel] = useState('');
   const [hasDesc, setHasDesc] = useState(false);
   const [desc, setDesc] = useState('');
   const [hasKids, setHasKids] = useState(false);
-  const [childLabel, setChildLabel] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   // Reset the form whenever a different node is opened.
@@ -157,11 +152,9 @@ function NodeEditModal() {
     setName(node.name);
     setHasValue(node.value !== undefined);
     setValue(String(node.value ?? 0));
-    setValueLabel(node.valueLabel ?? '');
     setHasDesc(node.description !== undefined);
     setDesc(node.description ?? '');
     setHasKids(node.children !== undefined);
-    setChildLabel(node.childValueLabel ?? '');
     setConfirmDelete(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ref?.nodeId]);
@@ -172,14 +165,18 @@ function NodeEditModal() {
 
   const save = () => {
     const gs = useGameStore.getState();
+    // A page's top-level node keeps its number, description and sub-items; only its name changes.
+    if (isRoot) {
+      gs.updateNode(ref.page, ref.nodeId, { name: name.trim() });
+      close();
+      return;
+    }
     if (hasKids && node.children === undefined) gs.addAttachment(ref.page, ref.nodeId, 'children');
     if (!hasKids && node.children !== undefined) gs.removeAttachment(ref.page, ref.nodeId, 'children');
     gs.updateNode(ref.page, ref.nodeId, {
       name: name.trim(),
       value: hasValue ? parseInt(value, 10) || 0 : undefined,
-      valueLabel: hasValue && valueLabel.trim() ? valueLabel.trim() : undefined,
       description: hasDesc ? desc.trim() : undefined,
-      childValueLabel: hasKids && childLabel.trim() ? childLabel.trim() : undefined,
     });
     close();
   };
@@ -197,45 +194,31 @@ function NodeEditModal() {
       <ScrollView style={styles.editScroll} keyboardShouldPersistTaps="handled">
         <Input scheme={scheme} value={name} onChangeText={setName} placeholder="Name" />
 
-        <Toggle scheme={scheme} label="Number" value={hasValue} onChange={setHasValue} />
-        {hasValue && (
-          <View style={styles.inlineRow}>
-            <Input
-              scheme={scheme}
-              value={value}
-              onChangeText={(v) => (v === '' || v === '-' || /^-?\d+$/.test(v)) && setValue(v)}
-              keyboardType="numbers-and-punctuation"
-              style={styles.numberInput}
-              selectTextOnFocus
-            />
-            <Input
-              scheme={scheme}
-              value={valueLabel}
-              onChangeText={setValueLabel}
-              placeholder={inheritedLabel ? `Label (${inheritedLabel})` : 'Label (e.g. XP)'}
-              style={{ flex: 1 }}
-            />
-          </View>
-        )}
+        {!isRoot && (
+          <>
+            <Toggle scheme={scheme} label="Number" value={hasValue} onChange={setHasValue} />
+            {hasValue && (
+              <NumberStepper
+                value={value}
+                onChange={setValue}
+                scheme={scheme}
+                keyboardType="numbers-and-punctuation"
+                style={styles.stepper}
+              />
+            )}
 
-        <Toggle scheme={scheme} label="Description" value={hasDesc} onChange={setHasDesc} />
-        {hasDesc && (
-          <Input scheme={scheme} value={desc} onChangeText={setDesc} placeholder="Description" multiline style={styles.descInput} />
-        )}
+            <Toggle scheme={scheme} label="Description" value={hasDesc} onChange={setHasDesc} />
+            {hasDesc && (
+              <Input scheme={scheme} value={desc} onChangeText={setDesc} placeholder="Description" multiline style={styles.descInput} />
+            )}
 
-        <Toggle scheme={scheme} label="Sub-items" value={hasKids} onChange={setHasKids} />
-        {hasKids && (
-          <Input
-            scheme={scheme}
-            value={childLabel}
-            onChangeText={setChildLabel}
-            placeholder="Label for sub-item numbers (e.g. Level)"
-          />
-        )}
-        {lostKids && (
-          <Text style={[styles.warning, { color: scheme.destructive }]}>
-            Saving will delete {node.children!.length} sub-item{node.children!.length === 1 ? '' : 's'}.
-          </Text>
+            <Toggle scheme={scheme} label="Sub-items" value={hasKids} onChange={setHasKids} />
+            {lostKids && (
+              <Text style={[styles.warning, { color: scheme.destructive }]}>
+                Saving will delete {node.children!.length} sub-item{node.children!.length === 1 ? '' : 's'}.
+              </Text>
+            )}
+          </>
         )}
       </ScrollView>
 
@@ -276,7 +259,7 @@ function Input({ scheme, style, ...rest }: React.ComponentProps<typeof TextInput
       selectionColor={scheme.primary}
       textAlignVertical={rest.multiline ? 'top' : 'center'}
       {...rest}
-      style={[styles.input, { color: scheme.text, borderColor: scheme.surfaceBorder, backgroundColor: scheme.primaryMuted }, style]}
+      style={[styles.input, { color: scheme.text, borderColor: scheme.surfaceBorder, backgroundColor: scheme.inputBackground }, style]}
     />
   );
 }
@@ -300,9 +283,8 @@ function Toggle({ scheme, label, value, onChange }: { scheme: ColorScheme; label
 const styles = StyleSheet.create({
   editScroll: { maxHeight: 460 },
   input: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 9, fontSize: 16, marginBottom: 10 },
-  numberInput: { width: 90, textAlign: 'center', fontWeight: '700' },
+  stepper: { marginBottom: 8 },
   descInput: { minHeight: 100, maxHeight: 200 },
-  inlineRow: { flexDirection: 'row', gap: 8 },
   toggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 6, marginBottom: 4 },
   toggleLabel: { fontSize: 15, fontWeight: '600' },
   warning: { fontSize: 13, fontWeight: '600', marginBottom: 8 },

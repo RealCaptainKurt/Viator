@@ -1,6 +1,5 @@
-import { COLOR_SCHEMES, DEFAULT_SCHEME } from '../constants/colorSchemes';
+import { toAccent } from '../constants/colorSchemes';
 import { createDefaultCampaign, createDefaultCharacter } from '../constants/nodeTemplates';
-import type { ColorSchemeId } from '../types';
 import type { AdditionalComponent, Campaign, Character, NPCItem } from '../types/legacy';
 import { GAME_SCHEMA_VERSION, type Game, type Node } from '../types/node';
 import { generateId } from './id';
@@ -75,10 +74,6 @@ export function parseGamesFile(text: string): Game[] {
 const isStr = (v: unknown): v is string => typeof v === 'string';
 const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 
-function isScheme(v: unknown): v is ColorSchemeId {
-  return isStr(v) && v in COLOR_SCHEMES;
-}
-
 /**
  * Coerce anything game-shaped into a valid Game: drops malformed fields,
  * fills required ones, and re-IDs duplicate or missing node IDs. Throws only
@@ -91,7 +86,8 @@ export function normalizeGame(raw: any): Game {
   return {
     version: GAME_SCHEMA_VERSION,
     id: isStr(raw.id) && raw.id ? raw.id : generateId(),
-    colorScheme: isScheme(raw.colorScheme) ? raw.colorScheme : DEFAULT_SCHEME,
+    // `colorScheme` is the pre-accent field name; toAccent maps its old ids.
+    accent: toAccent(raw.accent ?? raw.colorScheme),
     createdAt: isNum(raw.createdAt) ? raw.createdAt : now,
     updatedAt: isNum(raw.updatedAt) ? raw.updatedAt : now,
     character: raw.character ? normalizeNode(raw.character, seen) : createDefaultCharacter(),
@@ -107,12 +103,10 @@ function normalizeNode(raw: any, seen: Set<string>): Node {
   const node: Node = { id, name: isStr(raw?.name) ? raw.name : '' };
   if (isNum(raw?.value)) node.value = raw.value;
   if (isStr(raw?.description)) node.description = raw.description;
-  if (isStr(raw?.valueLabel)) node.valueLabel = raw.valueLabel;
   if (Array.isArray(raw?.children)) {
     node.children = raw.children
       .filter((c: unknown) => c && typeof c === 'object')
       .map((c: unknown) => normalizeNode(c, seen));
-    if (isStr(raw.childValueLabel)) node.childValueLabel = raw.childValueLabel;
   }
   return node;
 }
@@ -197,7 +191,6 @@ function legacyCharacter(ch: Character): Node {
     id: '',
     name: ch.name ?? '',
     value: Number(ch.xp) || 0,
-    valueLabel: 'XP',
     description: ch.description ?? '',
     children: ordered(
       {

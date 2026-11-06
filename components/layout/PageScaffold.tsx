@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import React, { useRef } from 'react';
-import { Dimensions, PanResponder, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, PanResponder, StatusBar, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useScheme } from '../../hooks/useScheme';
 import { useUIStore } from '../../store/uiStore';
@@ -11,17 +11,31 @@ const SWIPE_THRESHOLD = Dimensions.get('window').width * 0.2;
 /** Content column width cap so pages stay readable on desktop. */
 export const CONTENT_MAX_WIDTH = 760;
 
+const BUTTON_SIZE = 40;
+const BUTTON_MARGIN = 10;
+/**
+ * Top padding that keeps a page's first row clear of the floating buttons.
+ * Scrolling pages that opt into `underlay` apply this to their scroll content.
+ */
+export const FLOATING_INSET = BUTTON_SIZE + BUTTON_MARGIN * 2;
+
 interface Props {
-  title: string;
   /** 'menu' opens the sidebar (tab pages); 'back' pops the stack (extra pages). */
   leading?: 'menu' | 'back';
+  /** Floating buttons shown top-right (use FloatingButton). */
   actions?: React.ReactNode;
   /** Include the bottom safe-area inset (pages without the tab bar). */
   bottomInset?: boolean;
+  /**
+   * Let the page's own scroll view run under the floating buttons. The page
+   * must then pad its scroll content by FLOATING_INSET. Otherwise the scaffold
+   * reserves that space itself.
+   */
+  underlay?: boolean;
   children: React.ReactNode;
 }
 
-export default function PageScaffold({ title, leading = 'menu', actions, bottomInset, children }: Props) {
+export default function PageScaffold({ leading = 'menu', actions, bottomInset, underlay, children }: Props) {
   const scheme = useScheme();
   const openSidebar = useUIStore((s) => s.openSidebar);
 
@@ -43,37 +57,36 @@ export default function PageScaffold({ title, leading = 'menu', actions, bottomI
         colors={[scheme.backgroundGradientStart, scheme.backgroundGradientEnd]}
         style={StyleSheet.absoluteFillObject}
       />
-      <SafeAreaView style={styles.root} edges={bottomInset ? ['top', 'left', 'right', 'bottom'] : ['top', 'left', 'right']}>
+      <SafeAreaView
+        style={styles.root}
+        edges={bottomInset ? ['top', 'left', 'right', 'bottom'] : ['top', 'left', 'right']}
+      >
         <View style={styles.column}>
-          <View style={styles.topBar}>
+          <View style={[styles.body, !underlay && { paddingTop: FLOATING_INSET }]}>{children}</View>
+
+          {/* Floating controls sit above the page content. */}
+          <View style={styles.floatRow} pointerEvents="box-none">
             {leading === 'menu' ? (
-              <TouchableOpacity onPress={openSidebar} style={styles.iconBtn} hitSlop={8} accessibilityLabel="Open menu">
-                <Ionicons name="menu" size={26} color={scheme.text} />
-              </TouchableOpacity>
+              <FloatingButton icon="menu" label="Open menu" onPress={openSidebar} />
             ) : (
-              <TouchableOpacity
+              <FloatingButton
+                icon="arrow-back"
+                label="Back"
                 onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
-                style={styles.iconBtn}
-                hitSlop={8}
-                accessibilityLabel="Back"
-              >
-                <Ionicons name="arrow-back" size={24} color={scheme.text} />
-              </TouchableOpacity>
+              />
             )}
-            <Text style={[styles.title, { color: scheme.text }]} numberOfLines={1}>
-              {title}
-            </Text>
-            <View style={styles.actions}>{actions}</View>
+            <View style={styles.actions} pointerEvents="box-none">
+              {actions}
+            </View>
           </View>
-          <View style={styles.body}>{children}</View>
         </View>
       </SafeAreaView>
     </View>
   );
 }
 
-/** A small icon button for the top bar's action slot. */
-export function TopBarButton({
+/** A round icon button that floats over page content. */
+export function FloatingButton({
   icon,
   onPress,
   active,
@@ -86,8 +99,18 @@ export function TopBarButton({
 }) {
   const scheme = useScheme();
   return (
-    <TouchableOpacity onPress={onPress} style={styles.iconBtn} hitSlop={8} accessibilityLabel={label}>
-      <Ionicons name={icon} size={22} color={active ? scheme.primary : scheme.textSecondary} />
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.8}
+      hitSlop={6}
+      accessibilityLabel={label}
+      accessibilityState={active === undefined ? undefined : { selected: active }}
+      style={[
+        styles.fab,
+        { backgroundColor: active ? scheme.primary : scheme.surfaceSolid + 'ee', borderColor: scheme.surfaceBorder },
+      ]}
+    >
+      <Ionicons name={icon} size={22} color={active ? scheme.background : scheme.primary} />
     </TouchableOpacity>
   );
 }
@@ -95,16 +118,28 @@ export function TopBarButton({
 const styles = StyleSheet.create({
   root: { flex: 1 },
   column: { flex: 1, width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' },
-  topBar: {
+  body: { flex: 1 },
+  floatRow: {
+    position: 'absolute',
+    top: BUTTON_MARGIN,
+    left: BUTTON_MARGIN,
+    right: BUTTON_MARGIN,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    gap: 8,
-    minHeight: 52,
+    justifyContent: 'space-between',
   },
-  iconBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  title: { flex: 1, fontSize: 18, fontWeight: '800', letterSpacing: 0.2 },
-  actions: { flexDirection: 'row', alignItems: 'center' },
-  body: { flex: 1 },
+  actions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  fab: {
+    width: BUTTON_SIZE,
+    height: BUTTON_SIZE,
+    borderRadius: BUTTON_SIZE / 2,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.18,
+    shadowRadius: 5,
+    elevation: 3,
+  },
 });

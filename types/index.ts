@@ -1,18 +1,14 @@
-// ─── Color Schemes ──────────────────────────────────────────────────────────
-export type ColorSchemeId =
-  | 'obsidian'
-  | 'obsidianLight'
-  | 'ancientTanDark'
-  | 'ancientTanLight'
-  | 'peacefulPinkDark'
-  | 'peacefulPinkLight'
-  | 'hardlightBlueDark'
-  | 'hardlightBlueLight'
-  | 'alchemicalGoldDark'
-  | 'alchemicalGoldLight'
-  | 'magicalPurpleDark'
-  | 'magicalPurpleLight'
-  | 'monsterGreenDark'
-  | 'monsterGreenLight'
-  | 'apocalypseRedDark'
-  | 'apocalypseRedLight';
+// ─── Theme ──────────────────────────────────────────────────────────────────
+/** Light/dark reading mode. A device-wide preference. */
+export type ThemeMode = 'light' | 'dark';
+
+/** Secondary color used for icons, bars, and value boxes. Chosen per game. */
+export type AccentId =
+  | 'crimson'
+  | 'amber'
+  | 'gold'
+  | 'verdant'
+  | 'teal'
+  | 'azure'
+  | 'violet'
+  | 'rose';

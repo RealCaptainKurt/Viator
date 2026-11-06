@@ -2,7 +2,9 @@
  * Pre-overhaul data shapes. Only used to convert old exports and old on-device
  * saves into the Node model (see utils/gameFile.ts). Not used by the app itself.
  */
-import type { ColorSchemeId } from './index';
+
+/** One of the 16 retired scheme ids (e.g. 'ancientTanLight'); see `toAccent`. */
+type ColorSchemeId = string;
 
 // ─── Shared Components ──────────────────────────────────────────────────────
 export interface Trait {

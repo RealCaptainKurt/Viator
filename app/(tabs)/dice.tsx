@@ -5,7 +5,7 @@ import { useScheme } from '../../hooks/useScheme';
 export default function DiceScreen() {
   const scheme = useScheme();
   return (
-    <PageScaffold title="Dice Roller">
+    <PageScaffold>
       <DicePanel scheme={scheme} />
     </PageScaffold>
   );

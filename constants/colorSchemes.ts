@@ -1,310 +1,179 @@
-import { ColorSchemeId } from '../types';
+import type { AccentId, ThemeMode } from '../types';
 
-export interface ColorScheme {
-  id: ColorSchemeId;
-  label: string;
+/**
+ * Theme = a neutral light/dark base (used for all reading surfaces) plus one of
+ * eight accent colors (icons, bars, value boxes, active states).
+ *
+ * Components consume the flat `ColorScheme` object from `useScheme()`; it is
+ * composed here from the two independent choices.
+ */
+
+// ─── Accents ─────────────────────────────────────────────────────────────────
+// Each accent has two tuned shades: a deeper one that keeps text/icons legible
+// on the light base, and a brighter one for the dark base.
+export const ACCENTS: Record<AccentId, { label: string; light: string; dark: string }> = {
+  crimson: { label: 'Crimson', light: '#b91c1c', dark: '#f87171' },
+  amber: { label: 'Amber', light: '#c2410c', dark: '#fb923c' },
+  gold: { label: 'Gold', light: '#a16207', dark: '#facc15' },
+  verdant: { label: 'Verdant', light: '#15803d', dark: '#4ade80' },
+  teal: { label: 'Teal', light: '#0f766e', dark: '#2dd4bf' },
+  azure: { label: 'Azure', light: '#0369a1', dark: '#38bdf8' },
+  violet: { label: 'Violet', light: '#6d28d9', dark: '#a78bfa' },
+  rose: { label: 'Rose', light: '#be185d', dark: '#f472b6' },
+};
+
+export const ACCENT_IDS = Object.keys(ACCENTS) as AccentId[];
+export const DEFAULT_ACCENT: AccentId = 'amber';
+export const DEFAULT_MODE: ThemeMode = 'light';
+
+export function isAccent(v: unknown): v is AccentId {
+  return typeof v === 'string' && Object.prototype.hasOwnProperty.call(ACCENTS, v);
+}
+
+/**
+ * Coerce a stored value to an accent. Understands the 16 pre-overhaul scheme
+ * ids ('ancientTanLight', 'obsidian', …) by mapping each family to the
+ * nearest accent.
+ */
+export function toAccent(v: unknown): AccentId {
+  if (isAccent(v)) return v;
+  if (typeof v !== 'string') return DEFAULT_ACCENT;
+  const family = v.replace(/(Dark|Light)$/, '');
+  return LEGACY_FAMILIES[family] ?? DEFAULT_ACCENT;
+}
+
+const LEGACY_FAMILIES: Record<string, AccentId> = {
+  obsidian: 'teal',
+  ancientTan: 'amber',
+  peacefulPink: 'rose',
+  hardlightBlue: 'azure',
+  alchemicalGold: 'gold',
+  magicalPurple: 'violet',
+  monsterGreen: 'verdant',
+  apocalypseRed: 'crimson',
+};
+
+// ─── Color helpers ───────────────────────────────────────────────────────────
+function rgb(hex: string): [number, number, number] {
+  const n = parseInt(hex.slice(1), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+
+function withAlpha(hex: string, alpha: number): string {
+  const [r, g, b] = rgb(hex);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+/** Blend `top` over `base` by `amount` (0–1) into a solid hex color. */
+function mix(base: string, top: string, amount: number): string {
+  const a = rgb(base);
+  const b = rgb(top);
+  const out = a.map((c, i) => Math.round(c + (b[i] - c) * amount));
+  return `#${out.map((c) => c.toString(16).padStart(2, '0')).join('')}`;
+}
+
+// ─── Base palettes ───────────────────────────────────────────────────────────
+interface Base {
   background: string;
-  backgroundGradientStart: string;
-  backgroundGradientEnd: string;
-  surface: string;       // glass card base
-  surfaceBorder: string; // glass card border
-  primary: string;       // accent buttons, highlights
-  primaryMuted: string;  // subtle tint
+  gradientStart: string;
+  gradientEnd: string;
+  surface: string;
+  surfaceSolid: string;
+  surfaceBorder: string;
+  inputBackground: string;
   text: string;
   textSecondary: string;
   textMuted: string;
   destructive: string;
-  blurTint: 'light' | 'dark' | 'default';
-  levelColors: string[]; // 6 level colors for trait pips
 }
 
-export const COLOR_SCHEMES: Record<ColorSchemeId, ColorScheme> = {
-  obsidian: {
-    id: 'obsidian',
-    label: 'Obsidian Gray',
-    background: '#050506',
-    backgroundGradientStart: '#0e0e12',
-    backgroundGradientEnd: '#020203',
-    surface: 'rgba(30, 30, 36, 0.55)',
-    surfaceBorder: 'rgba(180, 180, 200, 0.12)',
-    primary: '#aaaacc',
-    primaryMuted: 'rgba(170, 170, 204, 0.12)',
-    text: '#eeeef8',
-    textSecondary: '#9999bb',
-    textMuted: 'rgba(153, 153, 187, 0.5)',
-    destructive: '#ff5555',
-    blurTint: 'dark',
-    levelColors: ['#1a1a22', '#2a2a38', '#3a3a55', '#555577', '#7777aa', '#aaaadd'],
-  },
-  obsidianLight: {
-    id: 'obsidianLight',
-    label: 'Gray Light',
-    background: '#f0f0f5',
-    backgroundGradientStart: '#e8e8f2',
-    backgroundGradientEnd: '#f5f5fa',
-    surface: 'rgba(255, 255, 255, 0.55)',
-    surfaceBorder: 'rgba(100, 100, 150, 0.22)',
-    primary: '#6666aa',
-    primaryMuted: 'rgba(102, 102, 170, 0.12)',
-    text: '#1a1a2a',
-    textSecondary: '#444466',
-    textMuted: 'rgba(68, 68, 102, 0.5)',
+const BASES: Record<ThemeMode, Base> = {
+  light: {
+    background: '#f6f5f2',
+    gradientStart: '#faf9f7',
+    gradientEnd: '#eeede8',
+    surface: 'rgba(255, 255, 255, 0.72)',
+    surfaceSolid: '#ffffff',
+    surfaceBorder: 'rgba(28, 28, 32, 0.12)',
+    inputBackground: 'rgba(28, 28, 32, 0.045)',
+    text: '#1c1c20',
+    textSecondary: '#4b4b55',
+    textMuted: 'rgba(75, 75, 85, 0.6)',
     destructive: '#c62828',
-    blurTint: 'light',
-    levelColors: ['#d8d8e8', '#b0b0cc', '#8888aa', '#666688', '#555577', '#333355'],
   },
-
-  // ── Ancient Tan ─────────────────────────────────────────────────────────────
-  ancientTanDark: {
-    id: 'ancientTanDark',
-    label: 'Ancient Tan',
-    background: '#120a02',
-    backgroundGradientStart: '#1e1004',
-    backgroundGradientEnd: '#0a0501',
-    surface: 'rgba(252, 229, 205, 0.07)',
-    surfaceBorder: 'rgba(212, 130, 58, 0.22)',
-    primary: '#d4823a',
-    primaryMuted: 'rgba(212, 130, 58, 0.15)',
-    text: '#fce5cd',
-    textSecondary: '#d4aa88',
-    textMuted: 'rgba(212, 170, 136, 0.5)',
+  dark: {
+    background: '#121316',
+    gradientStart: '#181a1e',
+    gradientEnd: '#0d0e10',
+    surface: 'rgba(255, 255, 255, 0.055)',
+    surfaceSolid: '#1d1f24',
+    surfaceBorder: 'rgba(255, 255, 255, 0.11)',
+    inputBackground: 'rgba(255, 255, 255, 0.07)',
+    text: '#ececf1',
+    textSecondary: '#a9a9b6',
+    textMuted: 'rgba(169, 169, 182, 0.6)',
     destructive: '#ff6b6b',
-    blurTint: 'dark',
-    levelColors: ['#3a1a05', '#6b3010', '#9b5520', '#d4823a', '#e8a860', '#fce5cd'],
-  },
-  ancientTanLight: {
-    id: 'ancientTanLight',
-    label: 'Tan Light',
-    background: '#fce5cd',
-    backgroundGradientStart: '#f8d8b8',
-    backgroundGradientEnd: '#fce5cd',
-    surface: 'rgba(255, 255, 255, 0.55)',
-    surfaceBorder: 'rgba(120, 63, 4, 0.22)',
-    primary: '#783f04',
-    primaryMuted: 'rgba(120, 63, 4, 0.12)',
-    text: '#3d1c01',
-    textSecondary: '#7a4a20',
-    textMuted: 'rgba(122, 74, 32, 0.5)',
-    destructive: '#c62828',
-    blurTint: 'light',
-    levelColors: ['#f0c898', '#d8a060', '#b87030', '#904010', '#6b2a08', '#3d1401'],
-  },
-
-  // ── Peaceful Pink ────────────────────────────────────────────────────────────
-  peacefulPinkDark: {
-    id: 'peacefulPinkDark',
-    label: 'Peaceful Pink',
-    background: '#1a0518',
-    backgroundGradientStart: '#280828',
-    backgroundGradientEnd: '#0e020e',
-    surface: 'rgba(255, 0, 255, 0.07)',
-    surfaceBorder: 'rgba(255, 0, 255, 0.22)',
-    primary: '#ff00ff',
-    primaryMuted: 'rgba(255, 0, 255, 0.15)',
-    text: '#ead1dc',
-    textSecondary: '#d899c0',
-    textMuted: 'rgba(216, 153, 192, 0.5)',
-    destructive: '#ff6b6b',
-    blurTint: 'dark',
-    levelColors: ['#3d0a30', '#6b1058', '#a01888', '#e000c8', '#ff00ff', '#ffaaff'],
-  },
-  peacefulPinkLight: {
-    id: 'peacefulPinkLight',
-    label: 'Pink Light',
-    background: '#ead1dc',
-    backgroundGradientStart: '#e0b8cc',
-    backgroundGradientEnd: '#ead1dc',
-    surface: 'rgba(255, 255, 255, 0.55)',
-    surfaceBorder: 'rgba(204, 0, 204, 0.22)',
-    primary: '#cc00cc',
-    primaryMuted: 'rgba(204, 0, 204, 0.12)',
-    text: '#3d0a2a',
-    textSecondary: '#880055',
-    textMuted: 'rgba(136, 0, 85, 0.5)',
-    destructive: '#c62828',
-    blurTint: 'light',
-    levelColors: ['#f5c0d8', '#e890b8', '#d05090', '#cc00cc', '#990099', '#660044'],
-  },
-
-  // ── Hardlight Blue ───────────────────────────────────────────────────────────
-  hardlightBlueDark: {
-    id: 'hardlightBlueDark',
-    label: 'Hardlight Blue',
-    background: '#050f1a',
-    backgroundGradientStart: '#091828',
-    backgroundGradientEnd: '#03080f',
-    surface: 'rgba(111, 168, 220, 0.08)',
-    surfaceBorder: 'rgba(111, 226, 243, 0.22)',
-    primary: '#6fa8dc',
-    primaryMuted: 'rgba(111, 168, 220, 0.15)',
-    text: '#d8f0ff',
-    textSecondary: '#88c4e8',
-    textMuted: 'rgba(136, 196, 232, 0.5)',
-    destructive: '#ff6b6b',
-    blurTint: 'dark',
-    levelColors: ['#0a1e3d', '#103468', '#1a5898', '#6fa8dc', '#6fe2f3', '#b8f0ff'],
-  },
-  hardlightBlueLight: {
-    id: 'hardlightBlueLight',
-    label: 'Blue Light',
-    background: '#d8f0fa',
-    backgroundGradientStart: '#b8e4f5',
-    backgroundGradientEnd: '#d8f0fa',
-    surface: 'rgba(255, 255, 255, 0.55)',
-    surfaceBorder: 'rgba(45, 122, 191, 0.22)',
-    primary: '#2d7abf',
-    primaryMuted: 'rgba(45, 122, 191, 0.12)',
-    text: '#082040',
-    textSecondary: '#285888',
-    textMuted: 'rgba(40, 88, 136, 0.5)',
-    destructive: '#c62828',
-    blurTint: 'light',
-    levelColors: ['#c0e0f8', '#88c0e8', '#4898d0', '#2d7abf', '#1a5a99', '#083870'],
-  },
-
-  // ── Alchemical Gold ──────────────────────────────────────────────────────────
-  alchemicalGoldDark: {
-    id: 'alchemicalGoldDark',
-    label: 'Alch. Gold',
-    background: '#120e02',
-    backgroundGradientStart: '#1e1604',
-    backgroundGradientEnd: '#0a0801',
-    surface: 'rgba(255, 217, 102, 0.07)',
-    surfaceBorder: 'rgba(255, 217, 102, 0.22)',
-    primary: '#ffd966',
-    primaryMuted: 'rgba(255, 217, 102, 0.15)',
-    text: '#fff2cc',
-    textSecondary: '#e8c870',
-    textMuted: 'rgba(232, 200, 112, 0.5)',
-    destructive: '#ff6b6b',
-    blurTint: 'dark',
-    levelColors: ['#2a1f05', '#504008', '#8a6c10', '#c8a020', '#ffd966', '#fff2cc'],
-  },
-  alchemicalGoldLight: {
-    id: 'alchemicalGoldLight',
-    label: 'Gold Light',
-    background: '#fff2cc',
-    backgroundGradientStart: '#fce8a0',
-    backgroundGradientEnd: '#fff2cc',
-    surface: 'rgba(255, 255, 255, 0.55)',
-    surfaceBorder: 'rgba(168, 120, 0, 0.22)',
-    primary: '#a87800',
-    primaryMuted: 'rgba(168, 120, 0, 0.12)',
-    text: '#3d2b00',
-    textSecondary: '#7a5500',
-    textMuted: 'rgba(122, 85, 0, 0.5)',
-    destructive: '#c62828',
-    blurTint: 'light',
-    levelColors: ['#faebb0', '#f0d060', '#d8a800', '#a87800', '#785200', '#4a3000'],
-  },
-
-  // ── Magical Purple ───────────────────────────────────────────────────────────
-  magicalPurpleDark: {
-    id: 'magicalPurpleDark',
-    label: 'Magical Purple',
-    background: '#0a0618',
-    backgroundGradientStart: '#120a28',
-    backgroundGradientEnd: '#06030e',
-    surface: 'rgba(217, 210, 233, 0.07)',
-    surfaceBorder: 'rgba(149, 112, 224, 0.22)',
-    primary: '#9570e0',
-    primaryMuted: 'rgba(149, 112, 224, 0.15)',
-    text: '#d9d2e9',
-    textSecondary: '#b8a8d8',
-    textMuted: 'rgba(184, 168, 216, 0.5)',
-    destructive: '#ff6b6b',
-    blurTint: 'dark',
-    levelColors: ['#1e0e40', '#341870', '#5030a8', '#7850c8', '#9570e0', '#d9d2e9'],
-  },
-  magicalPurpleLight: {
-    id: 'magicalPurpleLight',
-    label: 'Purple Light',
-    background: '#d9d2e9',
-    backgroundGradientStart: '#c8bede',
-    backgroundGradientEnd: '#d9d2e9',
-    surface: 'rgba(255, 255, 255, 0.55)',
-    surfaceBorder: 'rgba(103, 78, 167, 0.22)',
-    primary: '#674ea7',
-    primaryMuted: 'rgba(103, 78, 167, 0.12)',
-    text: '#1e1040',
-    textSecondary: '#4a3480',
-    textMuted: 'rgba(74, 52, 128, 0.5)',
-    destructive: '#c62828',
-    blurTint: 'light',
-    levelColors: ['#ede8f8', '#c8b8e8', '#a088cc', '#7858b0', '#674ea7', '#3e2878'],
-  },
-
-  // ── Monster Green ────────────────────────────────────────────────────────────
-  monsterGreenDark: {
-    id: 'monsterGreenDark',
-    label: 'Monster Green',
-    background: '#060f06',
-    backgroundGradientStart: '#0a1a0a',
-    backgroundGradientEnd: '#030803',
-    surface: 'rgba(106, 168, 79, 0.08)',
-    surfaceBorder: 'rgba(106, 168, 79, 0.22)',
-    primary: '#6aa84f',
-    primaryMuted: 'rgba(106, 168, 79, 0.15)',
-    text: '#d9ead3',
-    textSecondary: '#98cc80',
-    textMuted: 'rgba(152, 204, 128, 0.5)',
-    destructive: '#ff6b6b',
-    blurTint: 'dark',
-    levelColors: ['#0f2a0a', '#1e4e14', '#327820', '#508838', '#6aa84f', '#d9ead3'],
-  },
-  monsterGreenLight: {
-    id: 'monsterGreenLight',
-    label: 'Green Light',
-    background: '#d9ead3',
-    backgroundGradientStart: '#c4ddb8',
-    backgroundGradientEnd: '#d9ead3',
-    surface: 'rgba(255, 255, 255, 0.55)',
-    surfaceBorder: 'rgba(62, 112, 48, 0.22)',
-    primary: '#3e7030',
-    primaryMuted: 'rgba(62, 112, 48, 0.12)',
-    text: '#0f2a08',
-    textSecondary: '#3a6025',
-    textMuted: 'rgba(58, 96, 37, 0.5)',
-    destructive: '#c62828',
-    blurTint: 'light',
-    levelColors: ['#c8e8be', '#a8d090', '#78b058', '#4e8838', '#3e7030', '#1e4018'],
-  },
-
-  // ── Apocalypse Red ───────────────────────────────────────────────────────────
-  apocalypseRedDark: {
-    id: 'apocalypseRedDark',
-    label: 'Apoc. Red',
-    background: '#150303',
-    backgroundGradientStart: '#220505',
-    backgroundGradientEnd: '#0a0202',
-    surface: 'rgba(255, 0, 0, 0.07)',
-    surfaceBorder: 'rgba(255, 50, 50, 0.22)',
-    primary: '#ff3333',
-    primaryMuted: 'rgba(255, 51, 51, 0.15)',
-    text: '#e6b8af',
-    textSecondary: '#e08070',
-    textMuted: 'rgba(224, 128, 112, 0.5)',
-    destructive: '#ff6666',
-    blurTint: 'dark',
-    levelColors: ['#3d0505', '#700a0a', '#aa1515', '#dd2020', '#ff3333', '#e6b8af'],
-  },
-  apocalypseRedLight: {
-    id: 'apocalypseRedLight',
-    label: 'Red Light',
-    background: '#e6b8af',
-    backgroundGradientStart: '#dba09a',
-    backgroundGradientEnd: '#e6b8af',
-    surface: 'rgba(255, 255, 255, 0.55)',
-    surfaceBorder: 'rgba(192, 0, 0, 0.22)',
-    primary: '#c00000',
-    primaryMuted: 'rgba(192, 0, 0, 0.12)',
-    text: '#3d0a05',
-    textSecondary: '#880808',
-    textMuted: 'rgba(136, 8, 8, 0.5)',
-    destructive: '#880000',
-    blurTint: 'light',
-    levelColors: ['#f5c0b8', '#e89080', '#d05040', '#bb1818', '#c00000', '#800000'],
   },
 };
 
-export const DEFAULT_SCHEME: ColorSchemeId = 'ancientTanLight';
+// ─── Composed scheme ─────────────────────────────────────────────────────────
+export interface ColorScheme {
+  mode: ThemeMode;
+  accent: AccentId;
+
+  // Neutral — reading surfaces
+  background: string;
+  backgroundGradientStart: string;
+  backgroundGradientEnd: string;
+  surface: string; // translucent card base
+  surfaceSolid: string; // opaque surface (modals)
+  surfaceBorder: string;
+  inputBackground: string;
+  text: string;
+  textSecondary: string;
+  textMuted: string;
+  destructive: string;
+  blurTint: 'light' | 'dark';
+
+  // Accent — icons, bars, value boxes, active states
+  primary: string; // accent for icons / text on the base (hex, so `+ '33'` alpha works)
+  primaryMuted: string; // faint accent wash (value boxes, banners)
+  bar: string; // solid accent-tinted fill for the tab bar and top bar
+  barBorder: string;
+}
+
+const cache = new Map<string, ColorScheme>();
+
+/** The flat scheme for a mode + accent. Results are cached (16 combinations). */
+export function buildScheme(mode: ThemeMode, accent: AccentId): ColorScheme {
+  const key = `${mode}:${accent}`;
+  const hit = cache.get(key);
+  if (hit) return hit;
+
+  const base = BASES[mode];
+  const primary = ACCENTS[accent][mode];
+  const dark = mode === 'dark';
+
+  const scheme: ColorScheme = {
+    mode,
+    accent,
+    background: base.background,
+    backgroundGradientStart: base.gradientStart,
+    backgroundGradientEnd: base.gradientEnd,
+    surface: base.surface,
+    surfaceSolid: base.surfaceSolid,
+    surfaceBorder: base.surfaceBorder,
+    inputBackground: base.inputBackground,
+    text: base.text,
+    textSecondary: base.textSecondary,
+    textMuted: base.textMuted,
+    destructive: base.destructive,
+    blurTint: mode,
+    primary,
+    primaryMuted: withAlpha(primary, dark ? 0.16 : 0.1),
+    bar: mix(base.background, primary, dark ? 0.12 : 0.07),
+    barBorder: withAlpha(primary, dark ? 0.32 : 0.28),
+  };
+  cache.set(key, scheme);
+  return scheme;
+}

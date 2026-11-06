@@ -9,6 +9,8 @@ interface Props {
   children: React.ReactNode;
   intensity?: number;
   noPadding?: boolean;
+  /** Opaque fill instead of the translucent surface (for modals over a dimmed backdrop). */
+  solid?: boolean;
 }
 
 export default function GlassCard({
@@ -17,6 +19,7 @@ export default function GlassCard({
   children,
   intensity = 20,
   noPadding = false,
+  solid = false,
 }: Props) {
   return (
     <View
@@ -34,7 +37,7 @@ export default function GlassCard({
       <View
         style={[
           styles.overlay,
-          { backgroundColor: scheme.surface },
+          { backgroundColor: solid ? scheme.surfaceSolid : scheme.surface },
           !noPadding && styles.padding,
         ]}
       >

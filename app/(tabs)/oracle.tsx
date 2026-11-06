@@ -5,7 +5,7 @@ import { useScheme } from '../../hooks/useScheme';
 export default function OracleScreen() {
   const scheme = useScheme();
   return (
-    <PageScaffold title="Oracle">
+    <PageScaffold>
       <OraclePanel scheme={scheme} />
     </PageScaffold>
   );

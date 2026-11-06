@@ -56,7 +56,7 @@ export function mapNode(root: Node, id: string, fn: (node: Node) => Node): Node 
 }
 
 // ─── Edits ───────────────────────────────────────────────────────────────────
-export type NodePatch = Partial<Pick<Node, 'name' | 'value' | 'description' | 'valueLabel' | 'childValueLabel'>>;
+export type NodePatch = Partial<Pick<Node, 'name' | 'value' | 'description'>>;
 
 /** Shallow-merge fields. A key set to `undefined` is removed from the node. */
 export function updateNode(root: Node, id: string, patch: NodePatch): Node {
@@ -84,7 +84,6 @@ export function removeAttachment(root: Node, id: string, kind: Attachment): Node
     if (node[kind] === undefined) return node;
     const next = { ...node };
     delete next[kind];
-    if (kind === 'children') delete next.childValueLabel;
     return next;
   });
 }

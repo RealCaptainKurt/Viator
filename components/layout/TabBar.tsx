@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useScheme } from '../../hooks/useScheme';
 
@@ -23,7 +23,7 @@ export default function TabBar({ state, navigation }: BottomTabBarProps) {
     <View
       style={[
         styles.bar,
-        { backgroundColor: scheme.background, borderTopColor: scheme.surfaceBorder, paddingBottom: Math.max(insets.bottom, 6) },
+        { backgroundColor: scheme.bar, borderTopColor: scheme.barBorder, paddingBottom: Math.max(insets.bottom, 6) },
       ]}
     >
       {state.routes.map((route, i) => {
@@ -45,10 +45,9 @@ export default function TabBar({ state, navigation }: BottomTabBarProps) {
             accessibilityState={{ selected: focused }}
             accessibilityLabel={tab.label}
           >
-            <MaterialCommunityIcons name={focused ? tab.iconActive : tab.icon} size={24} color={color} />
-            <Text style={[styles.label, { color }]} numberOfLines={1}>
-              {tab.label}
-            </Text>
+            <View style={[styles.pill, focused && { backgroundColor: scheme.primaryMuted }]}>
+              <MaterialCommunityIcons name={focused ? tab.iconActive : tab.icon} size={26} color={color} />
+            </View>
           </TouchableOpacity>
         );
       })}
@@ -62,6 +61,6 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     paddingTop: 6,
   },
-  tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 2, paddingVertical: 2 },
-  label: { fontSize: 11, fontWeight: '600' },
+  tab: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 2 },
+  pill: { paddingHorizontal: 18, paddingVertical: 6, borderRadius: 16 },
 });

@@ -1,4 +1,4 @@
-import type { ColorSchemeId } from './index';
+import type { AccentId } from './index';
 
 // ─── Node ────────────────────────────────────────────────────────────────────
 /**
@@ -20,19 +20,6 @@ export interface Node {
   description?: string;
   /** Sub-object attachment. Nests without limit. */
   children?: Node[];
-
-  /**
-   * Label for this node's own number. Overrides the parent's childValueLabel.
-   * Mainly for roots (no parent) and template-built nodes like NPCs.
-   */
-  valueLabel?: string;
-  /** Default label for the numbers of this node's direct children, e.g. "XP". */
-  childValueLabel?: string;
-}
-
-/** Resolve the label to show next to a node's number. */
-export function resolveValueLabel(node: Node, parent: Node | null): string | undefined {
-  return node.valueLabel ?? parent?.childValueLabel;
 }
 
 // ─── Game ────────────────────────────────────────────────────────────────────
@@ -43,7 +30,8 @@ export interface Game {
   /** Bumped when the shape changes so future saves can be migrated. */
   version: typeof GAME_SCHEMA_VERSION;
   id: string;
-  colorScheme: ColorSchemeId;
+  /** Accent color for this game (the light/dark mode is a device preference). */
+  accent: AccentId;
   createdAt: number;
   updatedAt: number;
   /** Root of the Character page. name = character name, value = XP. */

@@ -1,10 +1,9 @@
 import { View, StyleSheet } from 'react-native';
 import { Link, Stack } from 'expo-router';
-import { COLOR_SCHEMES, DEFAULT_SCHEME } from '../constants/colorSchemes';
-
-const scheme = COLOR_SCHEMES[DEFAULT_SCHEME];
+import { useScheme } from '../hooks/useScheme';
 
 export default function NotFoundScreen() {
+  const scheme = useScheme();
   return (
     <>
       <Stack.Screen options={{ title: 'Oops! Not found' }} />

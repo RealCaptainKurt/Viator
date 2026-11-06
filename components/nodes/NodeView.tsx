@@ -1,4 +1,4 @@
-import { Feather, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { memo } from 'react';
 import { LayoutAnimation, Platform, Pressable, StyleSheet, Text, TouchableOpacity, UIManager, View } from 'react-native';
 import type { ColorScheme } from '../../constants/colorSchemes';
@@ -25,13 +25,11 @@ export function dropMovingNode(page: GamePage, parentId: string, index: number) 
 // ─── Value chip ──────────────────────────────────────────────────────────────
 export function ValueChip({
   value,
-  label,
   onPress,
   scheme,
   large,
 }: {
   value: number;
-  label?: string;
   onPress: () => void;
   scheme: ColorScheme;
   large?: boolean;
@@ -41,9 +39,8 @@ export function ValueChip({
       onPress={onPress}
       hitSlop={6}
       style={[styles.chip, large && styles.chipLarge, { borderColor: scheme.primary + '55', backgroundColor: scheme.primaryMuted }]}
-      accessibilityLabel={`${label ?? 'Value'} ${value}, edit`}
+      accessibilityLabel={`Value ${value}, edit`}
     >
-      {label ? <Text style={[styles.chipLabel, { color: scheme.textSecondary }]}>{label}</Text> : null}
       <Text style={[styles.chipValue, large && styles.chipValueLarge, { color: scheme.primary }]}>{value}</Text>
     </TouchableOpacity>
   );
@@ -56,7 +53,6 @@ export function DescriptionBlock({ text, onPress, scheme }: { text: string; onPr
       <Text style={[styles.descText, text ? { color: scheme.textSecondary } : { color: scheme.textMuted, fontStyle: 'italic' }]}>
         {text || 'Tap to add a description…'}
       </Text>
-      <Feather name="edit-2" size={12} color={scheme.textMuted} style={styles.descIcon} />
     </Pressable>
   );
 }
@@ -95,7 +91,6 @@ export function ChildList({ parent, page, depth, insideMoving }: ChildListProps)
             node={child}
             page={page}
             depth={depth}
-            inheritedLabel={parent.childValueLabel}
             insideMoving={insideMoving}
           />
           {slot(i + 1)}
@@ -138,11 +133,10 @@ interface NodeViewProps {
   page: GamePage;
   /** 0 = direct child of the page root (rendered as a card). */
   depth: number;
-  inheritedLabel?: string;
   insideMoving: boolean;
 }
 
-function NodeViewImpl({ node, page, depth, inheritedLabel, insideMoving }: NodeViewProps) {
+function NodeViewImpl({ node, page, depth, insideMoving }: NodeViewProps) {
   const scheme = useScheme();
   const collapsed = useGameStore((s) => !!s.prefs.collapsed[node.id]);
   const toggleCollapsed = useGameStore((s) => s.toggleCollapsed);
@@ -154,7 +148,6 @@ function NodeViewImpl({ node, page, depth, inheritedLabel, insideMoving }: NodeV
   const childInsideMoving = insideMoving || isMovingThis;
   const hasBody = node.description !== undefined || node.children !== undefined;
   const expanded = hasBody && !collapsed && !isMovingThis;
-  const label = node.valueLabel ?? inheritedLabel;
   const ref = { page, nodeId: node.id };
   const isCard = depth === 0;
 
@@ -204,7 +197,7 @@ function NodeViewImpl({ node, page, depth, inheritedLabel, insideMoving }: NodeV
           </TouchableOpacity>
         )}
         {node.value !== undefined && !moving && (
-          <ValueChip value={node.value} label={label} scheme={scheme} onPress={() => setUI({ editingValue: ref })} />
+          <ValueChip value={node.value} scheme={scheme} onPress={() => setUI({ editingValue: ref })} />
         )}
         {isEditMode && !moving && (
           <TouchableOpacity onPress={openEditor} hitSlop={8} style={styles.moreBtn} accessibilityLabel={`Edit ${node.name}`}>
@@ -214,7 +207,7 @@ function NodeViewImpl({ node, page, depth, inheritedLabel, insideMoving }: NodeV
       </Pressable>
 
       {expanded && (
-        <View style={isCard ? styles.cardBody : [styles.rowBody, { borderLeftColor: scheme.surfaceBorder }, depth > 5 && styles.rowBodyTight]}>
+        <View style={isCard ? styles.cardBody : [styles.rowBody, { borderLeftColor: scheme.primary + '88' }, depth > 5 && styles.rowBodyTight]}>
           {node.description !== undefined && (
             <DescriptionBlock
               text={node.description}
@@ -244,20 +237,19 @@ const styles = StyleSheet.create({
   cardTitle: { flex: 1, fontSize: 16, fontWeight: '700', letterSpacing: 0.2 },
   rowTitle: { flex: 1, fontSize: 15, fontWeight: '600' },
   cardBody: { paddingHorizontal: 6, paddingBottom: 8 },
-  rowBody: { marginLeft: 11, paddingLeft: 10, borderLeftWidth: 1, marginBottom: 4 },
+  rowBody: { marginLeft: 11, paddingLeft: 10, borderLeftWidth: 2, marginBottom: 4 },
   rowBodyTight: { marginLeft: 4, paddingLeft: 6 },
   childList: { gap: 0 },
   moreBtn: { width: 28, alignItems: 'center' },
   // value chip
-  chip: { flexDirection: 'row', alignItems: 'baseline', gap: 5, borderWidth: 1, borderRadius: 8, paddingHorizontal: 9, paddingVertical: 3 },
-  chipLarge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10 },
-  chipLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 0.5, textTransform: 'uppercase' },
-  chipValue: { fontSize: 15, fontWeight: '800', minWidth: 12, textAlign: 'center' },
-  chipValueLarge: { fontSize: 20 },
+  // Centered (not baseline-aligned) with tight line boxes, so the digits sit in the middle of the box.
+  chip: { flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1, borderRadius: 8, paddingHorizontal: 9, paddingVertical: 3 },
+  chipLarge: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 10 },
+  chipValue: { fontSize: 15, lineHeight: 18, fontWeight: '800', minWidth: 12, textAlign: 'center', textAlignVertical: 'center', includeFontPadding: false },
+  chipValueLarge: { fontSize: 20, lineHeight: 24 },
   // description
   desc: { flexDirection: 'row', gap: 6, paddingVertical: 6, paddingHorizontal: 4 },
   descText: { flex: 1, fontSize: 14, lineHeight: 20 },
-  descIcon: { marginTop: 4 },
   // misc
   empty: { fontSize: 13, fontStyle: 'italic', paddingVertical: 6, paddingHorizontal: 4 },
   addRow: {

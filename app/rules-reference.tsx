@@ -14,7 +14,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLOR_SCHEMES } from "../constants/colorSchemes";
+import type { ColorScheme } from "../constants/colorSchemes";
 import { useScheme } from "../hooks/useScheme";
 import GlassCard from "../components/ui/GlassCard";
 
@@ -774,7 +774,7 @@ type Tab = "solo" | "viator";
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
-type Scheme = (typeof COLOR_SCHEMES)[keyof typeof COLOR_SCHEMES];
+type Scheme = ColorScheme;
 
 function SubEntry({
   sub,

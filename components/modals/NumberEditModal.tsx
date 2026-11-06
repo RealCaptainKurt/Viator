@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TextInput, View } from 'react-native';
 import { ColorScheme } from '../../constants/colorSchemes';
 import GlassButton from '../ui/GlassButton';
+import NumberStepper from '../ui/NumberStepper';
 import ModalOverlay from './ModalOverlay';
 
 interface Props {
@@ -35,9 +36,6 @@ export default function NumberEditModal({
     }
   }, [visible, initialValue, initialName]);
 
-  const adjust = (delta: number) =>
-    setDraftValue((v) => String((parseInt(v, 10) || 0) + delta));
-
   const handleSave = () => {
     const n = parseInt(draftValue, 10);
     if (!isNaN(n)) onSave(n, allowNameEdit ? draftName.trim() : undefined);
@@ -59,40 +57,20 @@ export default function NumberEditModal({
           placeholderTextColor={scheme.textMuted}
           style={[
             styles.nameInput,
-            { color: scheme.text, borderColor: scheme.surfaceBorder, backgroundColor: scheme.primaryMuted },
+            { color: scheme.text, borderColor: scheme.surfaceBorder, backgroundColor: scheme.inputBackground },
           ]}
           selectionColor={scheme.primary}
           autoFocus
         />
       )}
 
-      <View style={styles.row}>
-        <TouchableOpacity
-          onPress={() => adjust(-1)}
-          style={[styles.adjustBtn, { borderColor: scheme.surfaceBorder, backgroundColor: scheme.surface }]}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.adjustText, { color: scheme.destructive }]}>−</Text>
-        </TouchableOpacity>
-
-        <TextInput
-          value={draftValue}
-          onChangeText={(v) => { if (v === '' || /^-?\d+$/.test(v)) setDraftValue(v); }}
-          keyboardType="number-pad"
-          style={[styles.input, { color: scheme.primary, borderColor: scheme.surfaceBorder, backgroundColor: scheme.primaryMuted }]}
-          selectionColor={scheme.primary}
-          selectTextOnFocus
-          autoFocus={!allowNameEdit}
-        />
-
-        <TouchableOpacity
-          onPress={() => adjust(1)}
-          style={[styles.adjustBtn, { borderColor: scheme.surfaceBorder, backgroundColor: scheme.surface }]}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.adjustText, { color: scheme.primary }]}>+</Text>
-        </TouchableOpacity>
-      </View>
+      <NumberStepper
+        value={draftValue}
+        onChange={setDraftValue}
+        scheme={scheme}
+        autoFocus={!allowNameEdit}
+        style={styles.stepper}
+      />
 
       <View style={styles.actions}>
         <GlassButton label="Cancel" onPress={onClose} scheme={scheme} variant="ghost" small style={{ flex: 1 }} />
@@ -118,34 +96,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 20,
   },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
+  stepper: {
     marginBottom: 20,
-  },
-  adjustBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  adjustText: {
-    fontSize: 24,
-    fontWeight: '700',
-    lineHeight: 28,
-  },
-  input: {
-    flex: 1,
-    minWidth: 0,
-    borderWidth: 1,
-    borderRadius: 10,
-    padding: 10,
-    fontSize: 22,
-    fontWeight: '700',
-    textAlign: 'center',
   },
   actions: {
     flexDirection: 'row',

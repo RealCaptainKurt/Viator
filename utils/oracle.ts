@@ -1,10 +1,4 @@
-const d6 = (): number => Math.floor(Math.random() * 6) + 1;
-
-// ── Internal helpers ──────────────────────────────────────────────────────────
-
-function _roll<T>(table: T[]): T {
-  return table[Math.floor(Math.random() * table.length)];
-}
+import { d6, pick as _roll } from './oracleRoll';
 
 // ── Oracle focus tables ───────────────────────────────────────────────────────
 
@@ -63,32 +57,26 @@ const SCENE_COMPLICATIONS = [
   "things actually go as planned",
 ];
 
-// d10
+// d6 — pacing and failure moves share the six categories from the GM Guide's
+// "Setting Penalties" box (PC / NPC / World / Story / Threat / Future). Failure
+// moves keep the penalty wording; pacing moves are the same ideas reframed to
+// stir things up when the action lulls, without punishing the PCs.
 const PACING_MOVES = [
-  "Foreshadow trouble ahead",
-  "Reveal an unexpected detail",
-  "An NPC makes their move",
-  "Advance a looming threat",
-  "Push a plot arc forward",
-  "Introduce a new character or faction",
-  "Shift the scene — change the location or conditions",
-  "A clue or new lead surfaces",
-  "Two existing forces or problems suddenly collide",
-  "Something important is lost, taken, or changed",
+  "PC — put a character in the spotlight: their goals, hooks, or past come into play",
+  "NPC — an NPC makes their move, acts out, or gets into a spot of trouble",
+  "World — something in the environment changes",
+  "Story — reveal an interesting truth about the situation, or offer the players a tough choice",
+  "Threat — a threat, conflict, or rival advances their goal",
+  "Future — foreshadow a new or existing source of trouble",
 ];
 
-// d10
 const FAILURE_MOVES = [
-  "Deal harm to someone or something",
-  "Put someone in a difficult spot",
-  "Offer a hard choice with no good answer",
-  "Advance a threat",
-  "Reveal an unwelcome truth",
-  "Foreshadow something worse to come",
-  "Take something away — resource, ally, or advantage",
-  "The environment turns hostile or complicated",
-  "Introduce a new problem or complication",
-  "Someone's loyalty or resolve is tested",
+  "PC — a direct penalty: they take Trait damage or have disadvantage on a future roll",
+  "NPC — an NPC turns on the PCs, acts out, or otherwise gets into a spot of trouble",
+  "World — something in the environment changes or turns against you",
+  "Story — reveal an ugly truth about the situation, or force a tough choice on the players",
+  "Threat — a threat, conflict, or rival advances their goal because of the PCs' actions",
+  "Future — foreshadow a new or existing source of trouble",
 ];
 
 function _randomEventText(): string {
@@ -196,27 +184,12 @@ export function rollRandomEvent(): string {
   return `Random Event: ${_randomEventText()}`;
 }
 
-/** OPSE Action Focus — what is happening or what to do. */
-export function rollActionFocus(): string {
-  return `Action Focus: ${_roll(ACTION_FOCUS_TABLE)}`;
-}
-
-/** OPSE Detail Focus — what kind or quality of thing is it. */
-export function rollDetailFocus(): string {
-  return `Detail Focus: ${_roll(DETAIL_FOCUS_TABLE)}`;
-}
-
-/** OPSE Topic Focus — what is this about. */
-export function rollTopicFocus(): string {
-  return `Topic Focus: ${_roll(TOPIC_FOCUS_TABLE)}`;
-}
-
-/** OPSE Pacing Move — use when action lulls or "what now?" */
+/** Pacing Move — use when action lulls or "what now?" */
 export function rollPacingMove(): string {
   return `Pacing Move: ${_pacingMoveText()}`;
 }
 
-/** OPSE Failure Move — use when a roll fails with consequences. */
+/** Failure Move — use when a roll fails or only partly succeeds. */
 export function rollFailureMove(): string {
   return `Failure Move: ${_roll(FAILURE_MOVES)}`;
 }
@@ -507,34 +480,41 @@ const NPC_NOTABLE_FEATURE = [
   "an unexpected age or origin",
 ];
 
+// ── GM Guide — Plot Hook Generator tables ─────────────────────────────────────
+// Each is phrased to slot into: "The players want to [OBJECTIVE], but their path
+// is blocked by [OBSTACLE]. And along the way, [TWIST]."
+
+// "The players want to…"
 const PLOT_OBJECTIVE = [
-  "eliminate a threat",
-  "learn the truth",
+  "eliminate or otherwise remove a threat",
+  "learn the hidden truth about something",
   "recover something valuable",
-  "escort or deliver someone to safety",
+  "deliver something — or someone — to safety",
   "restore something broken",
-  "save an ally in peril",
+  "save an ally or someone important",
 ];
 
-const PLOT_REWARD = [
-  "money or valuables",
-  "money or valuables",
-  "knowledge and secrets",
-  "the support of an ally",
-  "advancing a plot arc",
-  "a unique item of power",
-];
-
-const PLOT_ADVERSARY = [
+// "But in their way stands…" (phrased to work for singular and plural)
+const PLOT_OBSTACLE = [
   "a powerful organization",
-  "outlaws",
+  "outlaws or criminals",
   "guardians",
-  "local inhabitants",
+  "the local inhabitants",
   "an enemy horde or force",
   "a new or recurring villain",
 ];
 
-// ── OPSE NPC & Plot Hook helpers ──────────────────────────────────────────────
+// "And along the way…" (each is a full clause)
+const PLOT_TWIST = [
+  "a new or recurring NPC provides a distraction",
+  "the party finds that the quest giver lied about some things",
+  "a second threat gets in the way by random chance",
+  "nature or the land itself becomes an obstacle",
+  "a separate opportunity for treasure or interest turns up",
+  "they are on a VERY tight time frame",
+];
+
+// ── OPSE NPC helpers ──────────────────────────────────────────────
 
 function _article(word: string): string {
   return /^[aeiou]/i.test(word) ? "An" : "A";
@@ -562,13 +542,12 @@ export function rollNPC(): string {
   return result;
 }
 
-/** OPSE Plot Hook Generator — objective, reward, adversary, and Detail Focus. */
+/** GM Guide Plot Hook Generator — objective, obstacle, and a twist along the way. */
 export function rollPlotHook(): string {
   const objective = PLOT_OBJECTIVE[d6() - 1];
-  const reward = PLOT_REWARD[d6() - 1];
-  const adversary = PLOT_ADVERSARY[d6() - 1];
-  const detail = _roll(DETAIL_FOCUS_TABLE);
-  return `Plot Hook: You have to ${objective} in exchange for ${reward}, but in your way stands ${adversary} who are ${detail}.`;
+  const obstacle = PLOT_OBSTACLE[d6() - 1];
+  const twist = PLOT_TWIST[d6() - 1];
+  return `Plot Hook: The players want to ${objective}, but their path is blocked by ${obstacle}. And along the way, ${twist}.`;
 }
 
 // ── GM Guide — One-Shot World Generator tables ────────────────────────────────
@@ -656,57 +635,33 @@ export function rollWorld(): string {
 
 // ── Tower of Echoes — Power & Item tables ─────────────────────────────────────
 
-const POWER_TYPES = [
-  "Blazing",
-  "Icy",
-  "Windy",
-  "Shocking",
-  "Earthen",
-  "Watery",
-  "Bright",
-  "Shadow",
-  "Holy",
-  "Unholy",
-  "Healing",
-  "Poisonous",
-  "Sonic",
-  "Binding",
-  "Shattering",
-  "Slicing",
-  "Magnetic",
-  "Living",
-  "Mental",
-  "Swarming",
-  "Illusory",
-  "Flying",
-  "Draining",
-  "Exploding",
-  "Shielding",
-  "Commanding",
-  "Terrifying",
-  "Charming",
-  "Teleporting",
-  "Detecting",
-  "Lucky",
-  "Multiplying",
-  "Summoning",
-  "Timely",
-  "Gravitational",
-  "Mimicking",
-  "Rusting",
-  "Petrifying",
-  "Phasing",
-  "Mirroring",
-  "Withering",
-  "Hungry",
-  "Dreaming",
-  "Cursed",
-  "Blooming",
-  "Shifting",
-  "Sticky",
-  "Weeping",
-  "Hollow",
-  "Bloody",
+// GM Guide "Making Spells, Powers, and Magic Items" table: roll 2d6 in order
+// (tens, then ones) for a spell effect. Each row is one tens digit (1–6), each
+// column one ones digit, so POWER_TABLE[tens - 1][ones - 1] is entry 'tens·ones'.
+// Magic / Power uses only these effects; the Tower's Note adds Form below.
+const POWER_TABLE = [
+  // 11–16
+  ["Blazing", "Icy", "Windy", "Shocking", "Earthen", "Watery"],
+  // 21–26
+  ["Bright", "Shadow", "Holy", "Hellish", "Healing", "Poisonous"],
+  // 31–36
+  ["Sonic", "Binding", "Shattering", "Slicing", "Magnetic", "Living"],
+  // 41–46
+  ["Mental", "Bloody", "Illusory", "Flying", "Draining", "Exploding"],
+  // 51–56
+  ["Shielding", "Controlling", "Transforming", "Nullifying", "Teleporting", "Detecting"],
+  // 61–66
+  ["Growing", "Multiplying", "Summoning", "Timely", "Gravitational", "Mimicking"],
+];
+
+// Tower of Echoes "Form" table (d6): the casting flavor of a Note.
+const NOTE_FORM = [
+  "Blade / Tool (held or used)",
+  "Beam / Blast (fired or launched)",
+  "Armor / Mask (worn or covered)",
+  "Beast / Swarm (live or summoned)",
+  "Domain / Gate (anchored or stuck)",
+  "Hand / Eye (evolved or grown)",
 ];
 
 const ITEM_MELEE = [
@@ -801,10 +756,15 @@ const ITEM_TABLES = [
 
 // ── Power & Item internal helpers ─────────────────────────────────────────────
 
+/** One spell effect from the guide's table: 2d6 in order (tens, then ones). */
+function _rollPowerWord(): string {
+  return POWER_TABLE[d6() - 1][d6() - 1];
+}
+
 function _rollPowerWords(): string {
   const picked: string[] = [];
   while (picked.length < 2) {
-    const word = POWER_TYPES[Math.floor(Math.random() * POWER_TYPES.length)];
+    const word = _rollPowerWord();
     if (!picked.includes(word)) picked.push(word);
   }
   return picked.join(" ");
@@ -827,7 +787,12 @@ export function rollRandomItem(): string {
   return `Random Item: ${_rollItemName()}`;
 }
 
-/** Tower of Echoes — magic item combining power words and item type. */
-export function rollMagicItem(): string {
-  return `Magic Item: ${_rollPowerWords()} ${_rollItemName()}`;
+/** Tower of Echoes Note — two effects from the guide's table, plus a Form for casting flavor. */
+export function rollNote(): string {
+  return `Note: ${_rollPowerWords()} — ${NOTE_FORM[d6() - 1]}`;
+}
+
+/** Tower of Echoes Instrument — a Note's effects bound to an item. */
+export function rollInstrument(): string {
+  return `Instrument: ${_rollPowerWords()} ${_rollItemName()}`;
 }

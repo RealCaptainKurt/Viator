@@ -1,6 +1,6 @@
-import { DEFAULT_SCHEME } from './colorSchemes';
+import { DEFAULT_ACCENT } from './colorSchemes';
 import { GAME_SCHEMA_VERSION, type Game, type Node } from '../types/node';
-import type { ColorSchemeId } from '../types';
+import type { AccentId } from '../types';
 import { generateId } from '../utils/id';
 
 // ─── "Add…" templates ────────────────────────────────────────────────────────
@@ -29,9 +29,9 @@ export const NODE_TEMPLATES: NodeTemplate[] = [
       id: generateId(),
       name,
       value: 0,
-      valueLabel: 'XP',
       description: '',
-      children: [{ id: generateId(), name: 'Traits', children: [] }],
+      // One blank trait directly inside the NPC (no nested "Traits" folder).
+      children: [{ id: generateId(), name: 'New Trait', value: 1 }],
     }),
   },
 ];
@@ -44,7 +44,6 @@ export function createDefaultCharacter(name = 'New Character'): Node {
     id: generateId(),
     name,
     value: 0,
-    valueLabel: 'XP',
     description: '',
     children: [{ id: generateId(), name: 'Traits', children: [] }],
   };
@@ -56,7 +55,7 @@ export function createDefaultCampaign(name = 'New Campaign'): Node {
     name,
     children: [
       { id: generateId(), name: 'Current Scene', description: '' },
-      { id: generateId(), name: 'NPCs', childValueLabel: 'XP', children: [] },
+      { id: generateId(), name: 'NPCs', children: [] },
       { id: generateId(), name: 'Locations', children: [] },
       { id: generateId(), name: 'Scenes', children: [] },
     ],
@@ -65,17 +64,16 @@ export function createDefaultCampaign(name = 'New Campaign'): Node {
 
 export function createGame(opts: {
   characterName?: string;
-  campaignName?: string;
-  colorScheme?: ColorSchemeId;
+  accent?: AccentId;
 } = {}): Game {
   const now = Date.now();
   return {
     version: GAME_SCHEMA_VERSION,
     id: generateId(),
-    colorScheme: opts.colorScheme ?? DEFAULT_SCHEME,
+    accent: opts.accent ?? DEFAULT_ACCENT,
     createdAt: now,
     updatedAt: now,
     character: createDefaultCharacter(opts.characterName),
-    campaign: createDefaultCampaign(opts.campaignName),
+    campaign: createDefaultCampaign(),
   };
 }

@@ -1,29 +1,13 @@
+import { Ionicons } from '@expo/vector-icons';
 import React, { useRef, useState } from 'react';
-import { Animated, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { LayoutAnimation, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, UIManager, View } from 'react-native';
 import { ColorScheme } from '../../constants/colorSchemes';
-import {
-  rollActionFocus,
-  rollDetailFocus,
-  rollDungeonLoot,
-  rollDungeonRoom,
-  rollDungeonTheme,
-  rollFailureMove,
-  rollGroup,
-  rollHowMuch,
-  rollNPC,
-  rollOracle,
-  rollPacingMove,
-  rollPlotHook,
-  rollRandomEvent,
-  rollSetScene,
-  rollTopicFocus,
-  rollTown,
-  rollMagicPower,
-  rollRandomItem,
-  rollMagicItem,
-  rollWorld,
-} from '../../utils/oracle';
+import { ORACLE_SECTIONS, type OracleSection } from '../../constants/oracleSections';
+import { useGameStore } from '../../store/gameStore';
+import { rollOracle } from '../../utils/oracle';
 import GlassButton from '../ui/GlassButton';
+
+if (Platform.OS === 'android') UIManager.setLayoutAnimationEnabledExperimental?.(true);
 
 interface Props {
   scheme: ColorScheme;
@@ -31,48 +15,32 @@ interface Props {
 
 export default function OraclePanel({ scheme }: Props) {
   const [results, setResults] = useState<string[]>([]);
-  const [containerWidth, setContainerWidth] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
-  const slideAnim = useRef(new Animated.Value(0)).current;
+  const oracleOpen = useGameStore((s) => s.prefs.oracleOpen);
+  const setSectionOpen = useGameStore((s) => s.setOracleSectionOpen);
 
   const addResult = (text: string) => {
     setResults((prev) => [...prev, text]);
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 50);
   };
 
-  const goToPage2 = () => {
-    Animated.timing(slideAnim, { toValue: 1, duration: 240, useNativeDriver: true }).start();
+  const toggle = (section: OracleSection, isOpen: boolean) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setSectionOpen(section.id, !isOpen);
   };
-
-  const goToPage1 = () => {
-    Animated.timing(slideAnim, { toValue: 0, duration: 240, useNativeDriver: true }).start();
-  };
-
-  const translateX = slideAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, -containerWidth],
-  });
 
   return (
     <View style={styles.panel}>
-
-      {/* Results box */}
-      <View
-        style={[
-          styles.resultsBox,
-          { borderColor: scheme.surfaceBorder, backgroundColor: scheme.surface },
-        ]}
-      >
+      {/* Results box — pinned above everything so it stays in view while the sections scroll */}
+      <View style={[styles.resultsBox, { borderColor: scheme.surfaceBorder, backgroundColor: scheme.surface }]}>
         <ScrollView
           ref={scrollRef}
-          showsVerticalScrollIndicator={true}
+          showsVerticalScrollIndicator
           nestedScrollEnabled
           contentContainerStyle={styles.resultsContent}
         >
           {results.length === 0 ? (
-            <Text style={[styles.resultsEmpty, { color: scheme.textMuted }]}>
-              Ask the oracle...
-            </Text>
+            <Text style={[styles.resultsEmpty, { color: scheme.textMuted }]}>Ask the oracle...</Text>
           ) : (
             results.map((r, i) => (
               <Text key={i} style={[styles.resultText, { color: scheme.text }]}>
@@ -83,74 +51,60 @@ export default function OraclePanel({ scheme }: Props) {
         </ScrollView>
       </View>
 
-      {/* Button pages — overflow hidden clips the off-screen page */}
-      <View
-        style={styles.pagesContainer}
-        onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)}
-      >
-        <Animated.View
-          style={[
-            styles.pagesSlider,
-            { width: containerWidth * 2, transform: [{ translateX }] },
-          ]}
-        >
-          {/* ── Page 1 ── */}
-          <View style={{ width: containerWidth }}>
-            {/* Row 1: Recluse oracle — Unlikely | Oracle | Likely */}
-            <View style={styles.btnRow}>
-              <GlassButton label="Oracle Unlikely" onPress={() => addResult(rollOracle('unlikely'))} scheme={scheme} variant="secondary" small style={{ flex: 1 }} />
-              <GlassButton label="Oracle" onPress={() => addResult(rollOracle('even'))} scheme={scheme} variant="primary" style={{ flex: 1.5 }} />
-              <GlassButton label="Oracle Likely" onPress={() => addResult(rollOracle('likely'))} scheme={scheme} variant="secondary" small style={{ flex: 1 }} />
-            </View>
-            {/* Row 2: OPSE scene tools */}
-            <View style={styles.btnRow}>
-              <GlassButton label="Set a Scene" onPress={() => addResult(rollSetScene())} scheme={scheme} variant="secondary" style={{ flex: 1 }} />
-              <GlassButton label="How Much" onPress={() => addResult(rollHowMuch())} scheme={scheme} variant="secondary" style={{ flex: 1 }} />
-              <GlassButton label="Random Event" onPress={() => addResult(rollRandomEvent())} scheme={scheme} variant="secondary" style={{ flex: 1 }} />
-            </View>
-            {/* Row 3: OPSE focus draws */}
-            <View style={styles.btnRow}>
-              <GlassButton label="Action / Activity" onPress={() => addResult(rollActionFocus())} scheme={scheme} variant="secondary" style={{ flex: 1 }} />
-              <GlassButton label="Detail / Type" onPress={() => addResult(rollDetailFocus())} scheme={scheme} variant="secondary" style={{ flex: 1 }} />
-              <GlassButton label="Topic / Focus" onPress={() => addResult(rollTopicFocus())} scheme={scheme} variant="secondary" style={{ flex: 1 }} />
-            </View>
-            {/* Row 4: OPSE GM moves */}
-            <View style={styles.btnRow}>
-              <GlassButton label="Pacing Move" onPress={() => addResult(rollPacingMove())} scheme={scheme} variant="secondary" style={{ flex: 1 }} />
-              <GlassButton label="Failure Move" onPress={() => addResult(rollFailureMove())} scheme={scheme} variant="secondary" style={{ flex: 1 }} />
-              <GlassButton label="More >" onPress={goToPage2} scheme={scheme} variant="ghost" style={{ flex: 1 }} />
-            </View>
-          </View>
-
-          {/* ── Page 2 ── */}
-          <View style={{ width: containerWidth }}>
-            {/* Row 1: Dungeon */}
-            <View style={styles.btnRow}>
-              <GlassButton label="Dungeon Theme" onPress={() => addResult(rollDungeonTheme())} scheme={scheme} variant="secondary" style={{ flex: 1 }} />
-              <GlassButton label="Dungeon Room" onPress={() => addResult(rollDungeonRoom())} scheme={scheme} variant="secondary" style={{ flex: 1 }} />
-              <GlassButton label="Dungeon Loot" onPress={() => addResult(rollDungeonLoot())} scheme={scheme} variant="secondary" style={{ flex: 1 }} />
-            </View>
-            {/* Row 2: People & Places */}
-            <View style={styles.btnRow}>
-              <GlassButton label="NPC" onPress={() => addResult(rollNPC())} scheme={scheme} variant="secondary" style={{ flex: 1 }} />
-              <GlassButton label="Group" onPress={() => addResult(rollGroup())} scheme={scheme} variant="secondary" style={{ flex: 1 }} />
-              <GlassButton label="Town" onPress={() => addResult(rollTown())} scheme={scheme} variant="secondary" style={{ flex: 1 }} />
-            </View>
-            {/* Row 3: Magic & Items */}
-            <View style={styles.btnRow}>
-              <GlassButton label="Magic / Power" onPress={() => addResult(rollMagicPower())} scheme={scheme} variant="secondary" style={{ flex: 1 }} />
-              <GlassButton label="Random Item" onPress={() => addResult(rollRandomItem())} scheme={scheme} variant="secondary" style={{ flex: 1 }} />
-              <GlassButton label="Magic Item" onPress={() => addResult(rollMagicItem())} scheme={scheme} variant="secondary" style={{ flex: 1 }} />
-            </View>
-            {/* Row 4: Misc & Back */}
-            <View style={styles.btnRow}>
-              <GlassButton label="Plot Hook" onPress={() => addResult(rollPlotHook())} scheme={scheme} variant="secondary" style={{ flex: 1 }} />
-              <GlassButton label="World" onPress={() => addResult(rollWorld())} scheme={scheme} variant="secondary" style={{ flex: 1 }} />
-              <GlassButton label="< Back" onPress={goToPage1} scheme={scheme} variant="ghost" style={{ flex: 1 }} />
-            </View>
-          </View>
-        </Animated.View>
+      {/* Yes/no oracle — always one tap away */}
+      <View style={styles.btnRow}>
+        <GlassButton label="Oracle Unlikely" onPress={() => addResult(rollOracle('unlikely'))} scheme={scheme} variant="secondary" small style={{ flex: 1 }} />
+        <GlassButton label="Oracle" onPress={() => addResult(rollOracle('even'))} scheme={scheme} variant="primary" style={{ flex: 1.5 }} />
+        <GlassButton label="Oracle Likely" onPress={() => addResult(rollOracle('likely'))} scheme={scheme} variant="secondary" small style={{ flex: 1 }} />
       </View>
+
+      {/* Collapsible generator sections */}
+      <ScrollView style={styles.sections} contentContainerStyle={styles.sectionsContent} showsVerticalScrollIndicator={false}>
+        {ORACLE_SECTIONS.map((section) => {
+          const isOpen = oracleOpen[section.id] ?? !!section.defaultOpen;
+          return (
+            <View
+              key={section.id}
+              style={[styles.section, { borderColor: scheme.surfaceBorder, backgroundColor: scheme.surface }]}
+            >
+              <TouchableOpacity
+                onPress={() => toggle(section, isOpen)}
+                activeOpacity={0.7}
+                style={styles.sectionHeader}
+                accessibilityRole="button"
+                accessibilityState={{ expanded: isOpen }}
+              >
+                <Ionicons name={isOpen ? 'chevron-down' : 'chevron-forward'} size={16} color={scheme.primary} />
+                <Text style={[styles.sectionTitle, { color: scheme.text }]} numberOfLines={1}>
+                  {section.title}
+                </Text>
+                <Text style={[styles.sectionCount, { color: scheme.textMuted }]}>{section.generators.length}</Text>
+              </TouchableOpacity>
+
+              {isOpen && (
+                <View style={styles.grid}>
+                  {section.generators.length === 0 ? (
+                    <Text style={[styles.empty, { color: scheme.textMuted }]}>No generators yet</Text>
+                  ) : (
+                    section.generators.map((g) => (
+                      <GlassButton
+                        key={g.id}
+                        label={g.label}
+                        onPress={() => addResult(g.roll())}
+                        scheme={scheme}
+                        variant="secondary"
+                        small
+                        style={styles.gridBtn}
+                        textStyle={styles.gridBtnText}
+                      />
+                    ))
+                  )}
+                </View>
+              )}
+            </View>
+          );
+        })}
+      </ScrollView>
     </View>
   );
 }
@@ -162,11 +116,10 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
   },
   resultsBox: {
-    flex: 1,
-    minHeight: 140,
+    height: 170,
     borderRadius: 10,
     borderWidth: 1,
-    marginBottom: 16,
+    marginBottom: 12,
     overflow: 'hidden',
   },
   resultsContent: {
@@ -181,15 +134,58 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 19,
   },
-  pagesContainer: {
-    overflow: 'hidden',
-  },
-  pagesSlider: {
-    flexDirection: 'row',
-  },
   btnRow: {
     flexDirection: 'row',
     gap: 8,
-    marginBottom: 10,
+    marginBottom: 12,
+  },
+  sections: {
+    flex: 1,
+  },
+  sectionsContent: {
+    gap: 10,
+  },
+  section: {
+    borderWidth: 1,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    minHeight: 44,
+  },
+  sectionTitle: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  sectionCount: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    paddingHorizontal: 10,
+    paddingBottom: 12,
+  },
+  // ~3 per row on a phone, more on wider screens; buttons grow to fill each row.
+  gridBtn: {
+    flexGrow: 1,
+    flexBasis: 100,
+    paddingHorizontal: 8,
+  },
+  gridBtnText: {
+    textAlign: 'center',
+  },
+  empty: {
+    fontSize: 13,
+    fontStyle: 'italic',
+    paddingVertical: 4,
   },
 });

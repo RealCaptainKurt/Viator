@@ -1,7 +1,7 @@
 import { AppState, Platform } from 'react-native';
 import { create } from 'zustand';
 import { NODE_TEMPLATES, createGame } from '../constants/nodeTemplates';
-import type { ColorSchemeId } from '../types';
+import type { AccentId, ThemeMode } from '../types';
 import type { Game, GamePage, Node } from '../types/node';
 import { parseGamesFile, serializeGames } from '../utils/gameFile';
 import * as storage from '../utils/gameStorage';
@@ -22,7 +22,12 @@ interface GameStore {
   openGame: (id: string) => Promise<boolean>;
   closeGame: () => void;
   deleteGame: (id: string) => Promise<void>;
-  setColorScheme: (scheme: ColorSchemeId) => void;
+  /** Pin/unpin a saved game to the top of the Characters list. */
+  toggleFavorite: (id: string) => void;
+  /** Accent color of the open game. */
+  setAccent: (accent: AccentId) => void;
+  /** Light/dark mode, shared by every game on this device. */
+  setThemeMode: (mode: ThemeMode) => void;
 
   // ─── Node edits (on the open game) ─────────────────────────────────
   updateNode: (page: GamePage, id: string, patch: NodePatch) => void;
@@ -39,6 +44,8 @@ interface GameStore {
 
   // ─── UI prefs ──────────────────────────────────────────────────────
   toggleCollapsed: (nodeId: string) => void;
+  /** Remember whether an Oracle section is open. */
+  setOracleSectionOpen: (sectionId: string, open: boolean) => void;
 
   // ─── Files ─────────────────────────────────────────────────────────
   /** Load saved games by id (flushes pending edits first). */
@@ -93,7 +100,7 @@ export const useGameStore = create<GameStore>((set, get) => {
     isLoaded: false,
     games: [],
     game: null,
-    prefs: { activeGameId: null, collapsed: {} },
+    prefs: { activeGameId: null, collapsed: {}, mode: null, favorites: {}, oracleOpen: {} },
 
     initialize: async () => {
       attachFlushListeners();
@@ -137,9 +144,19 @@ export const useGameStore = create<GameStore>((set, get) => {
         setPrefs({ activeGameId: null });
       }
       set({ games: storage.listGames() });
+      if (get().prefs.favorites[id]) {
+        const { [id]: _removed, ...favorites } = get().prefs.favorites;
+        setPrefs({ favorites });
+      }
     },
 
-    setColorScheme: (scheme) => commit((g) => (g.colorScheme === scheme ? g : { ...g, colorScheme: scheme })),
+    toggleFavorite: (id) => {
+      const { [id]: wasFavorite, ...rest } = get().prefs.favorites;
+      setPrefs({ favorites: wasFavorite ? rest : { ...rest, [id]: true } });
+    },
+
+    setAccent: (accent) => commit((g) => (g.accent === accent ? g : { ...g, accent })),
+    setThemeMode: (mode) => setPrefs({ mode }),
 
     updateNode: (page, id, patch) => editPage(page, (r) => tree.updateNode(r, id, patch)),
     addAttachment: (page, id, kind) => editPage(page, (r) => tree.addAttachment(r, id, kind)),
@@ -182,6 +199,9 @@ export const useGameStore = create<GameStore>((set, get) => {
       else collapsed[nodeId] = true;
       setPrefs({ collapsed });
     },
+
+    setOracleSectionOpen: (sectionId, open) =>
+      setPrefs({ oracleOpen: { ...get().prefs.oracleOpen, [sectionId]: open } }),
 
     loadGames: async (ids) => {
       await storage.flushSaves();

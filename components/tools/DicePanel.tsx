@@ -15,7 +15,6 @@ interface DiceResult {
   label: string;
   rolls: number[];
   total: number;
-  displayText?: string;
 }
 
 const DICE_ROW1 = [6, 20, 100];
@@ -52,29 +51,6 @@ export default function DicePanel({ scheme }: Props) {
     const modStr = modifier > 0 ? `+${modifier}` : modifier < 0 ? `${modifier}` : '';
     return `Roll ${count}d${selectedDie}${modStr}`;
   })();
-
-  const rollViatorDice = (numDice: number): number => {
-    let hits = 0;
-    for (let i = 0; i < numDice; i++) {
-      const face = Math.floor(Math.random() * 6) + 1;
-      if (face >= 4) hits++;
-      if (face === 6) hits += rollViatorDice(1);
-    }
-    return hits;
-  };
-
-  const rollViator = () => {
-    const hits = rollViatorDice(count);
-    const result: DiceResult = {
-      id: generateId(),
-      label: `${count}d6 (Viator)`,
-      rolls: [],
-      total: hits,
-      displayText: `${hits} ${hits === 1 ? 'hit' : 'hits'}`,
-    };
-    setHistory((h) => [...h.slice(-19), result]);
-    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 50);
-  };
 
   const renderDieRow = (dice: number[]) => (
     <View style={styles.dieRow}>
@@ -134,7 +110,7 @@ export default function DicePanel({ scheme }: Props) {
                   </Text>
                 )}
                 <Text style={[styles.historyTotal, { color: scheme.primary }]}>
-                  {r.displayText ?? `= ${r.total}`}
+                  = {r.total}
                 </Text>
               </View>
             ))
@@ -142,11 +118,15 @@ export default function DicePanel({ scheme }: Props) {
         </ScrollView>
       </View>
 
-      {/* Die selector — two rows */}
-      <View style={styles.diceGrid}>
-        {renderDieRow(DICE_ROW1)}
-        {renderDieRow(DICE_ROW2)}
-      </View>
+      {/* Roll button */}
+      <GlassButton
+        label={rollLabel}
+        onPress={roll}
+        scheme={scheme}
+        variant="primary"
+        style={styles.rollBtn}
+        textStyle={styles.rollBtnText}
+      />
 
       {/* Count & modifier */}
       <View style={styles.countRow}>
@@ -191,20 +171,11 @@ export default function DicePanel({ scheme }: Props) {
         </View>
       </View>
 
-      {/* Roll button */}
-      <GlassButton
-        label={rollLabel}
-        onPress={roll}
-        scheme={scheme}
-        variant="primary"
-      />
-      <GlassButton
-        label={`Viator Roll ${count}d6`}
-        onPress={rollViator}
-        scheme={scheme}
-        variant="primary"
-        style={{ marginTop: 8 }}
-      />
+      {/* Die selector — two rows */}
+      <View style={styles.diceGrid}>
+        {renderDieRow(DICE_ROW1)}
+        {renderDieRow(DICE_ROW2)}
+      </View>
     </View>
   );
 }
@@ -249,9 +220,16 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     marginLeft: 'auto',
   },
+  rollBtn: {
+    paddingVertical: 18,
+    marginBottom: 16,
+  },
+  rollBtnText: {
+    fontSize: 18,
+    fontWeight: '800',
+  },
   diceGrid: {
     gap: 8,
-    marginBottom: 16,
   },
   dieRow: {
     flexDirection: 'row',

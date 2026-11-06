@@ -2,13 +2,13 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { router, type Href } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Dimensions, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
+import { Animated, Dimensions, StyleSheet, Switch, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { DEFAULT_SCHEME } from '../../constants/colorSchemes';
+import { DEFAULT_ACCENT } from '../../constants/colorSchemes';
 import { useScheme } from '../../hooks/useScheme';
 import { useGameStore } from '../../store/gameStore';
 import { useUIStore } from '../../store/uiStore';
-import ColorSchemeModal from '../modals/ColorSchemeModal';
+import AccentModal from '../modals/AccentModal';
 
 const SIDEBAR_WIDTH = Math.min(Dimensions.get('window').width * 0.78, 320);
 
@@ -21,8 +21,10 @@ export default function Sidebar() {
   const visible = useUIStore((s) => s.isSidebarOpen);
   const close = useUIStore((s) => s.closeSidebar);
   const game = useGameStore((s) => s.game);
-  const setColorScheme = useGameStore((s) => s.setColorScheme);
-  const [showSchemes, setShowSchemes] = useState(false);
+  const setAccent = useGameStore((s) => s.setAccent);
+  const setThemeMode = useGameStore((s) => s.setThemeMode);
+  const [showAccents, setShowAccents] = useState(false);
+  const isDark = scheme.mode === 'dark';
 
   const translateX = useRef(new Animated.Value(-SIDEBAR_WIDTH)).current;
   const backdrop = useRef(new Animated.Value(0)).current;
@@ -40,7 +42,7 @@ export default function Sidebar() {
   };
 
   const items: { icon: IconName; label: string; onPress: () => void; hidden?: boolean }[] = [
-    { icon: 'palette-outline', label: 'Color Theme', onPress: () => setShowSchemes(true), hidden: !game },
+    { icon: 'palette-outline', label: 'Accent Color', onPress: () => setShowAccents(true), hidden: !game },
     { icon: 'swap-vertical', label: 'Import / Export', onPress: () => go('/import-export') },
     { icon: 'book-open-variant', label: 'Rules Reference', onPress: () => go('/rules-reference') },
   ];
@@ -62,22 +64,35 @@ export default function Sidebar() {
             <Text style={[styles.appName, { color: scheme.text }]}>Viator</Text>
             <Text style={[styles.appSubtitle, { color: scheme.textSecondary }]}>Character Builder & Solo Engine</Text>
             <View style={[styles.divider, { backgroundColor: scheme.surfaceBorder }]} />
+            <View style={styles.navItem}>
+              <MaterialCommunityIcons name={isDark ? 'weather-night' : 'white-balance-sunny'} size={18} color={scheme.primary} />
+              <Text style={[styles.navLabel, styles.navGrow, { color: scheme.text }]}>Dark Mode</Text>
+              <Switch
+                value={isDark}
+                onValueChange={(on) => setThemeMode(on ? 'dark' : 'light')}
+                trackColor={{ true: scheme.primary, false: scheme.surfaceBorder }}
+                thumbColor="#fff"
+                // @ts-ignore - web only: without it the "on" thumb falls back to a teal default
+                activeThumbColor="#fff"
+                accessibilityLabel="Dark mode"
+              />
+            </View>
             {items
               .filter((i) => !i.hidden)
               .map((i) => (
                 <TouchableOpacity key={i.label} onPress={i.onPress} style={styles.navItem} activeOpacity={0.7}>
-                  <MaterialCommunityIcons name={i.icon} size={18} color={scheme.textSecondary} />
+                  <MaterialCommunityIcons name={i.icon} size={18} color={scheme.primary} />
                   <Text style={[styles.navLabel, { color: scheme.text }]}>{i.label}</Text>
                 </TouchableOpacity>
               ))}
           </View>
         </Animated.View>
       </Animated.View>
-      <ColorSchemeModal
-        visible={showSchemes}
-        onClose={() => setShowSchemes(false)}
-        current={game?.colorScheme ?? DEFAULT_SCHEME}
-        onChange={setColorScheme}
+      <AccentModal
+        visible={showAccents}
+        onClose={() => setShowAccents(false)}
+        current={game?.accent ?? DEFAULT_ACCENT}
+        onChange={setAccent}
         scheme={scheme}
       />
     </>
@@ -93,4 +108,5 @@ const styles = StyleSheet.create({
   divider: { height: 1, marginVertical: 18 },
   navItem: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },
   navLabel: { fontSize: 16, fontWeight: '600' },
+  navGrow: { flex: 1 },
 });
