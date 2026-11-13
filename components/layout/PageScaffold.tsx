@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
-import React, { useRef } from 'react';
+import { BottomTabBarHeightContext } from '@react-navigation/bottom-tabs';
+import { router, useNavigation } from 'expo-router';
+import React, { useContext, useRef } from 'react';
 import { Dimensions, PanResponder, StatusBar, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useScheme } from '../../hooks/useScheme';
@@ -18,6 +19,15 @@ const BUTTON_MARGIN = 10;
  * Scrolling pages that opt into `underlay` apply this to their scroll content.
  */
 export const FLOATING_INSET = BUTTON_SIZE + BUTTON_MARGIN * 2;
+
+/**
+ * Height of the floating tab bar covering the bottom of the page (0 off the
+ * tab pages). `underlay` pages add it to their scroll content's bottom padding
+ * so the last row can scroll clear of the bar.
+ */
+export function useTabBarOverlap(): number {
+  return useContext(BottomTabBarHeightContext) ?? 0;
+}
 
 interface Props {
   /** 'menu' opens the sidebar (tab pages); 'back' pops the stack (extra pages). */
@@ -38,14 +48,27 @@ interface Props {
 export default function PageScaffold({ leading = 'menu', actions, bottomInset, underlay, children }: Props) {
   const scheme = useScheme();
   const openSidebar = useUIStore((s) => s.openSidebar);
+  const overlap = useTabBarOverlap();
+  const navigation = useNavigation();
 
-  // Swipe right anywhere to open the sidebar (tab pages only).
+  // Tab pages: swipe left/right anywhere to move to the next/previous tab.
+  // Swiping right on the first tab opens the sidebar instead.
   const pan = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, g) =>
-        leading === 'menu' && g.dx > 8 && Math.abs(g.dy) < 40 && Math.abs(g.dx) > Math.abs(g.dy) * 2,
+        leading === 'menu' && Math.abs(g.dx) > 10 && Math.abs(g.dy) < 40 && Math.abs(g.dx) > Math.abs(g.dy) * 2,
       onPanResponderRelease: (_, g) => {
-        if (g.dx > SWIPE_THRESHOLD) useUIStore.getState().openSidebar();
+        const flick = Math.abs(g.vx) > 0.5 && Math.abs(g.dx) > 40;
+        if (Math.abs(g.dx) < SWIPE_THRESHOLD && !flick) return;
+        // The screen's navigation object is stable, so the first render's copy is fine.
+        const nav = navigation;
+        const { routes, index } = nav.getState() ?? { routes: [], index: 0 };
+        if (g.dx > 0) {
+          if (index === 0) useUIStore.getState().openSidebar();
+          else nav.navigate(routes[index - 1].name as never);
+        } else if (index < routes.length - 1) {
+          nav.navigate(routes[index + 1].name as never);
+        }
       },
     }),
   ).current;
@@ -62,7 +85,9 @@ export default function PageScaffold({ leading = 'menu', actions, bottomInset, u
         edges={bottomInset ? ['top', 'left', 'right', 'bottom'] : ['top', 'left', 'right']}
       >
         <View style={styles.column}>
-          <View style={[styles.body, !underlay && { paddingTop: FLOATING_INSET }]}>{children}</View>
+          <View style={[styles.body, !underlay && { paddingTop: FLOATING_INSET, paddingBottom: overlap }]}>
+            {children}
+          </View>
 
           {/* Floating controls sit above the page content. */}
           <View style={styles.floatRow} pointerEvents="box-none">

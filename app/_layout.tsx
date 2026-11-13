@@ -1,6 +1,6 @@
 import { Stack } from 'expo-router';
 import { useEffect } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useScheme } from '../hooks/useScheme';
 import { useGameStore } from '../store/gameStore';
@@ -14,6 +14,15 @@ export default function RootLayout() {
   useEffect(() => {
     initialize();
   }, [initialize]);
+
+  // Web: paint the page behind the app in the theme color, so the strips the
+  // browser shows around it (status bar, under the toolbar) match the app.
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+    document.documentElement.style.backgroundColor = scheme.background;
+    document.body.style.backgroundColor = scheme.background;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', scheme.background);
+  }, [scheme.background]);
 
   if (!isLoaded) {
     return (

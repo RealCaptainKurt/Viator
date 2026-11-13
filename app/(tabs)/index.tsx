@@ -2,7 +2,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import PageScaffold, { FLOATING_INSET, FloatingButton } from '../../components/layout/PageScaffold';
+import PageScaffold, { FLOATING_INSET, FloatingButton, useTabBarOverlap } from '../../components/layout/PageScaffold';
 import ModalOverlay from '../../components/modals/ModalOverlay';
 import AccentPicker from '../../components/ui/AccentPicker';
 import GlassButton from '../../components/ui/GlassButton';
@@ -21,6 +21,7 @@ export default function CharactersScreen() {
   const favorites = useGameStore((s) => s.prefs.favorites);
   const isEditMode = useUIStore((s) => s.isEditMode);
   const toggleEditMode = useUIStore((s) => s.toggleEditMode);
+  const overlap = useTabBarOverlap();
   const [creating, setCreating] = useState(false);
 
   // Favorites are pinned to the top; within each group the list keeps its recency order.
@@ -45,7 +46,7 @@ export default function CharactersScreen() {
         />
       }
     >
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: 32 + overlap }]}>
         <GlassButton
           label="New Game"
           icon={<MaterialCommunityIcons name="star-four-points" size={16} color={scheme.primary} />}

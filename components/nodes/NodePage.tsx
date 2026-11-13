@@ -6,7 +6,7 @@ import { useScheme } from '../../hooks/useScheme';
 import { useGameStore } from '../../store/gameStore';
 import { useUIStore } from '../../store/uiStore';
 import type { GamePage } from '../../types/node';
-import PageScaffold, { FLOATING_INSET, FloatingButton } from '../layout/PageScaffold';
+import PageScaffold, { FLOATING_INSET, FloatingButton, useTabBarOverlap } from '../layout/PageScaffold';
 import GlassButton from '../ui/GlassButton';
 import { ChildList, DescriptionBlock, ValueChip, dropMovingNode } from './NodeView';
 
@@ -41,13 +41,17 @@ function Tree({ page }: { page: GamePage }) {
   const character = useGameStore((s) => s.game?.character);
   const isEditMode = useUIStore((s) => s.isEditMode);
   const moving = useUIStore((s) => s.moving);
+  const overlap = useTabBarOverlap();
   const setUI = useUIStore((s) => s.set);
   if (!root || !character) return null;
   const ref = { page, nodeId: root.id };
   const titleRef = { page: 'character' as const, nodeId: character.id };
 
   return (
-    <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+    <ScrollView
+      contentContainerStyle={[styles.scroll, { paddingBottom: 32 + overlap }]}
+      keyboardShouldPersistTaps="handled"
+    >
       <View style={styles.rootHeader}>
         <Pressable onLongPress={() => setUI({ editing: titleRef })} style={styles.rootTitleWrap}>
           <Text style={[styles.rootTitle, { color: character.name ? scheme.text : scheme.textMuted }]}>
