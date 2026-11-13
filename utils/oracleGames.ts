@@ -2,7 +2,7 @@ import { cap, d6, roll6, roll66, stop } from './oracleRoll';
 
 /**
  * Generators for individual Viator games (Bordeaux, Starbound, The Tower of
- * Echoes), transcribed from each game's PDF.
+ * Echoes, Rainy Ruins), transcribed from each game's PDF.
  *
  * Conventions:
  *  - A 6-entry table is a d6 (`roll6`). Entries the book groups (e.g. "1-2")
@@ -892,4 +892,371 @@ export function rollTowerNPC(): string {
     `Outwardly they are ${roll6(TW_NPC_OUTER)}, but inwardly they are ${roll6(TW_NPC_INNER)}. ` +
     tie
   );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Rainy Ruins
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ── Settlement Generator ───────────────────────────────────────────────────
+const RR_ENVIRONMENT = [
+  'Commercial: a gas station, grocery store, niche shop, etc.',
+  'Public: a library, a school, a court, etc.',
+  'Residential: a home or small block of homes',
+  'Apartment(s): several rooms within a larger building',
+  'Industrial: a factory, warehouse, etc.',
+  'Wilderness: self-made buildings in a park or forest',
+];
+const RR_FOOD = [
+  'Small planters',
+  'Hunter(s) (Flex)',
+  'Gatherer(s)',
+  'Farmland',
+  'Greenhouse',
+  'Domesticated animals',
+];
+const RR_WATER = [
+  'Boiled scavenged water',
+  'Rain collectors',
+  'Nearby river (Flex)',
+  'Water well',
+  'Water purifier',
+  'Consistent water trade',
+];
+const RR_DEFENSE = [
+  'Armed guard(s)',
+  'Tricky traps',
+  'Lookout tower',
+  'Hired help',
+  'Automated turrets',
+  'Lots of spikes',
+];
+const RR_OTHER = [
+  'Makeshift gym',
+  'Small school',
+  'Trading posts',
+  'Armorsmith',
+  'Medic',
+  'Scavengers (Flex)',
+];
+/** Every "Other" Trait in the book is level 2. */
+const RR_OTHER_LEVEL = 2;
+const RR_PROBLEM_WHO = [
+  'Raiders are',
+  'Raiders are',
+  'Ghouls are',
+  'Another settlement is',
+  'Another faction is',
+  'Internal drama is',
+];
+const RR_PROBLEM_WHAT = [
+  'straining their defenses',
+  'hurting food production',
+  'threatening from nearby',
+  'moving into the area',
+  'isolating the settlement',
+  'forcing a bad deal',
+];
+
+/** Essential Traits roll 2d6 and keep the lower die. */
+const lowerOf2d6 = (): number => Math.min(d6(), d6());
+
+/** A Settlement Trait with its level: "Farmland (2)", or "Hunter(s) (2, Flex)". */
+function rrTrait(name: string, level: number): string {
+  const flex = name.endsWith(' (Flex)');
+  return `${flex ? name.slice(0, -7) : name} (${level}${flex ? ', Flex' : ''})`;
+}
+
+/**
+ * Rainy Ruins Settlement Generator (a populated settlement). Each Trait level
+ * is one working citizen and supports six people, so the result also lists
+ * any essential need the starting population already outgrows.
+ */
+export function rollRainySettlement(): string {
+  const essentials = [
+    { need: 'Food', name: roll6(RR_FOOD), level: lowerOf2d6() },
+    { need: 'Water', name: roll6(RR_WATER), level: lowerOf2d6() },
+    { need: 'Defense', name: roll6(RR_DEFENSE), level: lowerOf2d6() },
+  ];
+  const unassigned = d6();
+  const workers = essentials.reduce((sum, t) => sum + t.level, 0) + RR_OTHER_LEVEL;
+  const population = workers + unassigned;
+  const deficient = essentials
+    .filter((t) => t.level * 6 < population)
+    .map((t) => `${t.need} (supports ${t.level * 6} of ${population})`);
+
+  return [
+    `Settlement: ${roll6(RR_ENVIRONMENT)}`,
+    ...essentials.map((t) => `${t.need}: ${rrTrait(t.name, t.level)}`),
+    `Other: ${rrTrait(roll6(RR_OTHER), RR_OTHER_LEVEL)}`,
+    `Unassigned: ${unassigned}`,
+    `Population: ${population}`,
+    `Deficient: ${deficient.length ? deficient.join(', ') : 'Nothing'}`,
+    `Problem: ${roll6(RR_PROBLEM_WHO)} ${roll6(RR_PROBLEM_WHAT)}.`,
+  ].join('\n');
+}
+
+/** Rainy Ruins Settlement Generator (founding a new settlement). */
+export function rollRainyNewSettlement(): string {
+  return [
+    `New Settlement: ${roll6(RR_ENVIRONMENT)}`,
+    `Food: ${rrTrait(roll6(RR_FOOD), 1)}`,
+    `Water: ${rrTrait(roll6(RR_WATER), 1)}`,
+    `Defense: ${rrTrait(roll6(RR_DEFENSE), 1)}`,
+    'Each Trait needs a citizen the PCs bring or recruit to work it, or it is lost.',
+  ].join('\n');
+}
+
+/** Rainy Ruins deficiency table: rolled for each essential Trait still deficient at the end of a cycle. */
+export function rollRainyDeficiency(): string {
+  const table = [
+    () =>
+      `Catastrophe! ${d6()} random citizens die, and the settlement may fall apart if the need is unmet for another cycle.`,
+    () => `Mutiny! ${d6()} random citizens leave the settlement for another.`,
+    () => 'Rationing is stretching people too thin. All Settlement Traits roll at disadvantage for this cycle.',
+    () => "People don't feel safe enough to truly rest. No character may recover Trait or Arm levels here for this cycle.",
+    () => "There just isn't enough to go around. The settlement cannot help the party in any way this cycle.",
+    () => 'Citizens are unhappy, but they manage. No effect.',
+  ];
+  return `Deficiency: ${roll6(table)()}`;
+}
+
+// ── Faction Generator ──────────────────────────────────────────────────────
+const RR_FACTION_MORALITY = [
+  'Complete hedonism',
+  'Some messed up interests',
+  'Just wants to survive',
+  'Wants to help, if possible',
+  'Has a strong moral code',
+  'Still follows old world laws',
+];
+const RR_FACTION_ORGANIZATION = [
+  'No leader or structure at all',
+  'False figurehead leader',
+  'Several branch leaders',
+  'Brutal dictator',
+  'Inspiring warlord leader',
+  'Elected president',
+];
+const RR_FACTION_STRENGTH = [
+  'Control of freshwater',
+  'Large, sustainable farms',
+  'A valuable base location',
+  'Working old world tech',
+  'A cache of weaponry',
+  'A strong alliance with another faction',
+];
+const RR_FACTION_WEAKNESS = [
+  'They have no allies',
+  'Inconsistent food production',
+  "The guards / military don't have enough gear",
+  'Internal power struggle',
+  'They are low on numbers',
+  'Their leader is missing',
+];
+const RR_FACTION_OPPORTUNITY = [
+  'A new source of freshwater',
+  'Another faction wants to make a deal',
+  'An important piece of old-world tech is nearby',
+  'A scout found a better base location nearby',
+  'A talented member just needs a proper workspace',
+  'They control a locked-up secret resource',
+];
+const RR_FACTION_THREAT = [
+  'Nearby raiders demand tithe',
+  'Another faction wants them gone at any cost',
+  'The base is radiation-prone',
+  'They are almost out of supplies',
+  'The base has a secret backdoor entrance that somebody else already knew about',
+  'Their base is slowly sinking',
+];
+
+/** Rainy Ruins Faction Generator. */
+export function rollRainyFaction(): string {
+  return [
+    `Faction: ${roll6(RR_FACTION_MORALITY)}`,
+    `Organization: ${roll6(RR_FACTION_ORGANIZATION)}`,
+    `Strength: ${roll6(RR_FACTION_STRENGTH)}`,
+    `Weakness: ${roll6(RR_FACTION_WEAKNESS)}`,
+    `Opportunity: ${roll6(RR_FACTION_OPPORTUNITY)}`,
+    `Threat: ${roll6(RR_FACTION_THREAT)}`,
+  ].join('\n');
+}
+
+// ── Radiation / Mutation ───────────────────────────────────────────────────
+const RR_BODY_PART = ['head', 'torso', 'back', 'arm(s)', 'leg(s)', 'internal organ'];
+const RR_MUTATION_TYPE = [
+  'Cosmetic discoloration',
+  'Texture disruption',
+  'Fleshy growth',
+  'Hardened growth',
+  'Psionic powered',
+  'Elemental Glow',
+];
+
+/** Mutation Type + Body Part, e.g. "Fleshy growth, back". */
+function rainyMutationText(): string {
+  return `${roll6(RR_MUTATION_TYPE)}, ${roll6(RR_BODY_PART)}`;
+}
+
+/** Rainy Ruins mutation: Body Part + Mutation Type. */
+export function rollRainyMutation(): string {
+  return `Mutation: ${rainyMutationText()}`;
+}
+
+/**
+ * Rainy Ruins Radiation Table (rolled after a Failed or Partial reaction to
+ * radiation). A 6 continues onto the Mutation Table.
+ */
+export function rollRainyRadiation(): string {
+  const roll = d6();
+  if (roll <= 2) return 'Radiation: No effect.';
+  if (roll <= 5) return 'Radiation: Gain a level of Radiation (*).';
+
+  const mutation = d6();
+  const result =
+    mutation === 1
+      ? 'Gain a level of Radiation Sickness (*), which acts like Radiation (*) but can never be healed.'
+      : mutation <= 4
+        ? 'Gain a level of Radiation (*).'
+        : `Gain a mutation, as a Trait or just part of your description: ${rainyMutationText()}.`;
+  return (
+    `Radiation: Rolled a 6, so roll on the Mutation Table. ${result}\n` +
+    '(On a Partial Success, treat the 6 as a 5: gain a level of Radiation (*) instead.)'
+  );
+}
+
+// ── Loot & Threats by region ───────────────────────────────────────────────
+interface RainyRegion {
+  name: string;
+  /** Six Loot entries; `null` (always the 6) means roll on Valuables. */
+  loot: (string | null)[];
+  valuables: string[];
+  /** Entries containing a comma end with one, so the twist reads on. */
+  trouble: string[];
+  twist: string[];
+  /** The Tideflats roll loot twice underwater. */
+  underwaterTwice?: boolean;
+}
+
+/** The twist table every region shares, apart from its last entry. */
+const rrTwist = (sixth: string) => [
+  'are lying in wait',
+  'are blocking the way',
+  'are fighting someone else',
+  'are following the PCs',
+  'are guarding something',
+  sixth,
+];
+
+const RR_REGIONS = {
+  plateau: {
+    name: 'Plateau',
+    loot: ['Common Supplies - 1', 'Common Supplies - 1', 'Common Supplies - 2', 'Rare Supplies - 1', 'Rare Supplies - 1', null],
+    valuables: ['Tech Supplies - 1', 'Melee Weapon (2)', 'Melee Weapon (2)', 'Armor (2)', 'Armor (2)', 'Ranged Weapon (3)'],
+    trouble: [
+      'A pack of ghouls',
+      'Raiders, with a Gunner,',
+      'Raiders, with Psychos,',
+      'Wildlife, like Rainbow Stags,',
+      'Pack Rats',
+      'Desperate strays',
+    ],
+    twist: rrTwist('are setting traps'),
+  },
+  emerald: {
+    name: 'Emerald City',
+    loot: ['Common Supplies - 1', 'Common Supplies - 2', 'Rare Supplies - 1', 'Rare Supplies - 2', 'Melee Weapon (2)', null],
+    valuables: ['Tech Supplies - 1', 'Melee Weapon (3)', 'Armor (2)', 'Armor (3)', 'Ranged Weapon (3)', 'Ranged Weapon (3)'],
+    trouble: [
+      'Raiders, with Gunners,',
+      'Raiders, with a Veteran,',
+      'A pack of ghouls',
+      'United Navy soldiers',
+      'Pack Rats',
+      'Seattle Underground strays',
+    ],
+    twist: rrTwist('demand a tribute / bribe'),
+  },
+  tideflats: {
+    name: 'Tideflats',
+    loot: ['Common Supplies - 1', 'Rare Supplies - 1', 'Rare Supplies - 2', 'Melee Weapon (3)', 'Melee Weapon (3)', null],
+    valuables: ['Tech Supplies - 1', 'Melee Weapon (4)', 'Armor (3)', 'Armor (4)', 'Ranged Weapon (3)', 'Ranged Weapon (4)'],
+    trouble: [
+      'Iron Spikes',
+      'Iron Spikes',
+      'Raiders, with Divers,',
+      'United Navy soldiers',
+      'Wildlife, like Walking Sharks,',
+      'A pack of ghouls',
+    ],
+    twist: rrTwist('demand a tribute / bribe'),
+    underwaterTwice: true,
+  },
+  ashen: {
+    name: 'Ashen Hills',
+    loot: ['Rare Supplies - 1', 'Rare Supplies - 2', 'Tech Supplies - 1', 'Melee Weapon (3)', 'Armor (3)', null],
+    valuables: ['Melee Weapon (4)', 'Armor (3)', 'Armor (4)', 'Ranged Weapon (3)', 'Ranged Weapon (4)', 'Ranged Weapon (5)'],
+    trouble: [
+      'A pack of ghouls',
+      'Glowing Ghouls',
+      'Crazy / mutated strays',
+      'A Wildebear',
+      'Radiant Dawn members',
+      'Radiant Dawn',
+    ],
+    twist: rrTwist('are bathing in the Glow'),
+  },
+  sound: {
+    name: 'Toxic Sound',
+    loot: ['Common Supplies - 1', 'Rare Supplies - 1', 'Rare Supplies - 2', 'Melee Weapon (3)', 'Melee Weapon (3)', null],
+    valuables: ['Tech Supplies - 1', 'Armor (3)', 'Armor (4)', 'Armor (5)', 'Ranged Weapon (3)', 'Ranged Weapon (4)'],
+    trouble: ['Raider Pirates', 'Raider Pirates', 'Seahawks', 'United Navy soldiers', 'Wildlife', 'Islanders'],
+    twist: rrTwist('are half-submerged'),
+  },
+  greenwild: {
+    name: 'Greenwild',
+    loot: ['Common Supplies - 1', 'Common Supplies - 2', 'Common Supplies - 3', 'Rare Supplies - 1', 'Melee Weapon (3)', null],
+    valuables: ['Rare Supplies - 2', 'Rare Supplies - 3', 'Armor (2)', 'Armor (3)', 'Ranged Weapon (3)', 'Ranged Weapon (4)'],
+    trouble: [
+      'Raiders',
+      'Death Howlers',
+      'Jumping Cats',
+      'A Wildebear and her cubs',
+      'Tribal people',
+      'MacDonalds tribe members',
+    ],
+    twist: [
+      'are lying in wait',
+      'are blocking the way',
+      'are fighting raiders',
+      'are following the PCs',
+      'are guarding something',
+      'are caught in a storm',
+    ],
+  },
+} satisfies Record<string, RainyRegion>;
+
+export type RainyRegionId = keyof typeof RR_REGIONS;
+
+function rainyLootItem(region: RainyRegion): string {
+  return roll6(region.loot) ?? `Valuables! ${roll6(region.valuables)}`;
+}
+
+/** Rainy Ruins "Loot in …" table for one region (a 6 rolls on Valuables). */
+export function rollRainyLoot(id: RainyRegionId): string {
+  const region: RainyRegion = RR_REGIONS[id];
+  const text = `${region.name} Loot: ${rainyLootItem(region)}`;
+  return region.underwaterTwice ? `${text}\nIf underwater, also: ${rainyLootItem(region)}` : text;
+}
+
+/** Rainy Ruins "Threats of …" (Trouble + Twist); a lone subject takes "is" / "demands". */
+export function rollRainyThreat(id: RainyRegionId): string {
+  const region: RainyRegion = RR_REGIONS[id];
+  const trouble = roll6(region.trouble);
+  let twist = roll6(region.twist);
+  if (/^a /i.test(trouble) && !/ and /.test(trouble)) {
+    twist = twist.replace(/^are /, 'is ').replace(/^demand /, 'demands ');
+  }
+  return `${region.name} Threat: ${trouble} ${twist}.`;
 }

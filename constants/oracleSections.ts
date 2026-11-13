@@ -22,6 +22,14 @@ import {
   rollBordeauxJob,
   rollInnerPlanetLocation,
   rollOuterPlanetLocation,
+  rollRainyDeficiency,
+  rollRainyFaction,
+  rollRainyLoot,
+  rollRainyMutation,
+  rollRainyNewSettlement,
+  rollRainyRadiation,
+  rollRainySettlement,
+  rollRainyThreat,
   rollSalvagingJob,
   rollShootingJob,
   rollSmugglingJob,
@@ -33,7 +41,18 @@ import {
   rollTowerHook,
   rollTowerNPC,
   rollTowerTest,
+  type RainyRegionId,
 } from '../utils/oracleGames';
+
+/** Rainy Ruins regions, in book order: each gets a Loot and a Threat button. */
+const RAINY_REGIONS: [RainyRegionId, string][] = [
+  ['plateau', 'Plateau'],
+  ['emerald', 'Emerald City'],
+  ['tideflats', 'Tideflats'],
+  ['ashen', 'Ashen Hills'],
+  ['sound', 'Toxic Sound'],
+  ['greenwild', 'Greenwild'],
+];
 
 /**
  * The Oracle page is built from this list: one collapsible section per entry,
@@ -130,6 +149,22 @@ export const ORACLE_SECTIONS: OracleSection[] = [
       { id: 'hook', label: 'Hook', roll: rollTowerHook },
       { id: 'note', label: 'Note', roll: rollNote },
       { id: 'instrument', label: 'Instrument', roll: rollInstrument },
+    ],
+  },
+  {
+    id: 'rainy-ruins',
+    title: 'Rainy Ruins',
+    generators: [
+      { id: 'settlement', label: 'Settlement', roll: rollRainySettlement },
+      { id: 'new-settlement', label: 'New Settlement', roll: rollRainyNewSettlement },
+      { id: 'deficiency', label: 'Deficiency', roll: rollRainyDeficiency },
+      { id: 'faction', label: 'Faction', roll: rollRainyFaction },
+      { id: 'radiation', label: 'Radiation', roll: rollRainyRadiation },
+      { id: 'mutation', label: 'Mutation', roll: rollRainyMutation },
+      ...RAINY_REGIONS.flatMap(([region, name]) => [
+        { id: `${region}-loot`, label: `${name} Loot`, roll: () => rollRainyLoot(region) },
+        { id: `${region}-threat`, label: `${name} Threat`, roll: () => rollRainyThreat(region) },
+      ]),
     ],
   },
 ];

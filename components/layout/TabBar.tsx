@@ -1,6 +1,5 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { BottomTabBarHeightCallbackContext, type BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { BlurView } from 'expo-blur';
 import React, { useContext } from 'react';
 import { Platform, StyleSheet, TouchableOpacity, View, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -19,7 +18,7 @@ export const TABS: Record<string, { label: string; icon: IconName; iconActive: I
 };
 
 /**
- * Bottom bar that floats over the pages, so content scrolls behind its frosted
+ * Bottom bar that floats over the pages, so content scrolls behind its solid
  * fill. On the web it is `position: fixed` against the window bottom, which
  * also lets mobile Safari tint its own toolbar area to match the bar.
  * Pages pad their scroll content by its height (useTabBarOverlap).
@@ -35,9 +34,12 @@ export default function TabBar({ state, navigation }: BottomTabBarProps) {
       <View style={{ backgroundColor: scheme.background }}>
         <MoveBanner />
       </View>
-      <View style={[styles.bar, { borderTopColor: scheme.barBorder, paddingBottom: Math.max(insets.bottom, 6) }]}>
-        <BlurView intensity={30} tint={scheme.blurTint} style={StyleSheet.absoluteFillObject} />
-        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: scheme.bar + 'd9' }]} />
+      <View
+        style={[
+          styles.bar,
+          { backgroundColor: scheme.bar, borderTopColor: scheme.barBorder, paddingBottom: Math.max(insets.bottom, 6) },
+        ]}
+      >
         {state.routes.map((route, i) => {
           const tab = TABS[route.name];
           if (!tab) return null;

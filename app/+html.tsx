@@ -17,7 +17,7 @@ export default function Root({ children }: PropsWithChildren) {
           name="viewport"
           content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover"
         />
-        <meta name="theme-color" content="#f6f5f2" />
+        <meta name="theme-color" content="#faf9f7" />
         <ScrollViewStyleReset />
         <style dangerouslySetInnerHTML={{ __html: background }} />
       </head>
@@ -27,7 +27,7 @@ export default function Root({ children }: PropsWithChildren) {
 }
 
 const background = `
-html, body { background-color: #f6f5f2; }
+html, body { background-color: #faf9f7; }
 @media (prefers-color-scheme: dark) {
-  html, body { background-color: #121316; }
+  html, body { background-color: #181a1e; }
 }`;

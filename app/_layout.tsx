@@ -19,10 +19,15 @@ export default function RootLayout() {
   // browser shows around it (status bar, under the toolbar) match the app.
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof document === 'undefined') return;
-    document.documentElement.style.backgroundColor = scheme.background;
-    document.body.style.backgroundColor = scheme.background;
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', scheme.background);
-  }, [scheme.background]);
+    // The pages' gradient starts at this color, so the status bar strip blends in.
+    const color = scheme.backgroundGradientStart;
+    const root = document.documentElement;
+    root.style.backgroundColor = color;
+    // Tells the browser which light/dark look to give its own toolbars.
+    root.style.colorScheme = scheme.mode;
+    document.body.style.backgroundColor = color;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', color);
+  }, [scheme.backgroundGradientStart, scheme.mode]);
 
   if (!isLoaded) {
     return (
